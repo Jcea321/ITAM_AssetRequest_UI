@@ -384,6 +384,7 @@
         .sub-tab-btn.active .stb-count { background: rgba(255,255,255,0.3); }
         .nav-tabs-top .tab-content { padding: 0; }
         .tab-inner-content { padding: 1.25rem; }
+
     </style>
 </head>
 <body>
@@ -597,9 +598,9 @@
                         <div class="tab-pane fade show active" id="tab-pending-review" role="tabpanel">
                             <!-- Sub-tabs -->
                             <div class="sub-tabs-bar" id="pendingReview-subtabs">
-                                <button class="sub-tab-btn active" onclick="setSubTab('pendingReview','all',this)">All <span class="stb-count" id="stb-pendingReview-all">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('pendingReview','requested',this)">Requested <span class="stb-count" id="stb-pendingReview-requested">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('pendingReview','alternative_pending_client',this)">Pending Client Decision <span class="stb-count" id="stb-pendingReview-alternative_pending_client">0</span></button>
+                                <button class="sub-tab-btn active" data-status="all" onclick="setSubTab('pendingReview','all',this)">All <span class="stb-count" id="stb-pendingReview-all">0</span></button>
+                                <button class="sub-tab-btn" data-status="requested" onclick="setSubTab('pendingReview','requested',this)">Requested <span class="stb-count" id="stb-pendingReview-requested">0</span></button>
+                                <button class="sub-tab-btn" data-status="alternative_pending_client" onclick="setSubTab('pendingReview','alternative_pending_client',this)">Pending Client Decision <span class="stb-count" id="stb-pendingReview-alternative_pending_client">0</span></button>
                             </div>
                             <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminPending-toolbar">
@@ -668,16 +669,16 @@
                         <div class="tab-pane fade" id="tab-in-progress" role="tabpanel">
                             <!-- Sub-tabs -->
                             <div class="sub-tabs-bar" id="inProgress-subtabs">
-                                <button class="sub-tab-btn active" onclick="setSubTab('inProgress','all',this)">All <span class="stb-count" id="stb-inProgress-all">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','searching_inventory',this)">Searching Inventory <span class="stb-count" id="stb-inProgress-searching_inventory">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','match_found',this)">Match Found <span class="stb-count" id="stb-inProgress-match_found">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','no_match_alternative_proposed',this)">Alternative Proposed <span class="stb-count" id="stb-inProgress-no_match_alternative_proposed">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','alternative_accepted',this)">Alternative Accepted <span class="stb-count" id="stb-inProgress-alternative_accepted">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','alternative_rejected',this)">Alternative Rejected <span class="stb-count" id="stb-inProgress-alternative_rejected">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','reserved',this)">Reserved <span class="stb-count" id="stb-inProgress-reserved">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','setting_up',this)">Setting Up <span class="stb-count" id="stb-inProgress-setting_up">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','ready_for_transfer',this)">Ready for Transfer <span class="stb-count" id="stb-inProgress-ready_for_transfer">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','in_transit_to_recipient',this)">In Transit <span class="stb-count" id="stb-inProgress-in_transit_to_recipient">0</span></button>
+                                <button class="sub-tab-btn active" data-status="all" onclick="setSubTab('inProgress','all',this)">All <span class="stb-count" id="stb-inProgress-all">0</span></button>
+                                <button class="sub-tab-btn" data-status="searching_inventory" onclick="setSubTab('inProgress','searching_inventory',this)">Searching Inventory <span class="stb-count" id="stb-inProgress-searching_inventory">0</span></button>
+                                <button class="sub-tab-btn" data-status="match_found" onclick="setSubTab('inProgress','match_found',this)">Match Found <span class="stb-count" id="stb-inProgress-match_found">0</span></button>
+                                <button class="sub-tab-btn" data-status="no_match_alternative_proposed" onclick="setSubTab('inProgress','no_match_alternative_proposed',this)">Alternative Proposed <span class="stb-count" id="stb-inProgress-no_match_alternative_proposed">0</span></button>
+                                <button class="sub-tab-btn" data-status="alternative_accepted" onclick="setSubTab('inProgress','alternative_accepted',this)">Alternative Accepted <span class="stb-count" id="stb-inProgress-alternative_accepted">0</span></button>
+                                <button class="sub-tab-btn" data-status="alternative_rejected" onclick="setSubTab('inProgress','alternative_rejected',this)">Alternative Rejected <span class="stb-count" id="stb-inProgress-alternative_rejected">0</span></button>
+                                <button class="sub-tab-btn" data-status="reserved" onclick="setSubTab('inProgress','reserved',this)">Reserved <span class="stb-count" id="stb-inProgress-reserved">0</span></button>
+                                <button class="sub-tab-btn" data-status="setting_up" onclick="setSubTab('inProgress','setting_up',this)">Setting Up <span class="stb-count" id="stb-inProgress-setting_up">0</span></button>
+                                <button class="sub-tab-btn" data-status="ready_for_transfer" onclick="setSubTab('inProgress','ready_for_transfer',this)">Ready for Transfer <span class="stb-count" id="stb-inProgress-ready_for_transfer">0</span></button>
+                                <button class="sub-tab-btn" data-status="in_transit_to_recipient" onclick="setSubTab('inProgress','in_transit_to_recipient',this)">In Transit <span class="stb-count" id="stb-inProgress-in_transit_to_recipient">0</span></button>
                             </div>
                             <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminInProgress-toolbar">
@@ -746,11 +747,11 @@
                         <div class="tab-pane fade" id="tab-purchase-flow" role="tabpanel">
                             <!-- Sub-tabs -->
                             <div class="sub-tabs-bar" id="purchaseFlow-subtabs">
-                                <button class="sub-tab-btn active" onclick="setSubTab('purchaseFlow','all',this)">All <span class="stb-count" id="stb-purchaseFlow-all">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('purchaseFlow','pending_purchase_approval',this)">Pending Approval <span class="stb-count" id="stb-purchaseFlow-pending_purchase_approval">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('purchaseFlow','purchase_approved',this)">Purchase Approved <span class="stb-count" id="stb-purchaseFlow-purchase_approved">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('purchaseFlow','pending_receipt',this)">Pending Receipt <span class="stb-count" id="stb-purchaseFlow-pending_receipt">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('purchaseFlow','received_by_finance',this)">Received <span class="stb-count" id="stb-purchaseFlow-received_by_finance">0</span></button>
+                                <button class="sub-tab-btn active" data-status="all" onclick="setSubTab('purchaseFlow','all',this)">All <span class="stb-count" id="stb-purchaseFlow-all">0</span></button>
+                                <button class="sub-tab-btn" data-status="pending_purchase_approval" onclick="setSubTab('purchaseFlow','pending_purchase_approval',this)">Pending Approval <span class="stb-count" id="stb-purchaseFlow-pending_purchase_approval">0</span></button>
+                                <button class="sub-tab-btn" data-status="purchase_approved" onclick="setSubTab('purchaseFlow','purchase_approved',this)">Purchase Approved <span class="stb-count" id="stb-purchaseFlow-purchase_approved">0</span></button>
+                                <button class="sub-tab-btn" data-status="pending_receipt" onclick="setSubTab('purchaseFlow','pending_receipt',this)">Pending Receipt <span class="stb-count" id="stb-purchaseFlow-pending_receipt">0</span></button>
+                                <button class="sub-tab-btn" data-status="received_by_finance" onclick="setSubTab('purchaseFlow','received_by_finance',this)">Received <span class="stb-count" id="stb-purchaseFlow-received_by_finance">0</span></button>
                             </div>
                             <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminPurchase-toolbar">
@@ -819,11 +820,11 @@
                         <div class="tab-pane fade" id="tab-completed" role="tabpanel">
                             <!-- Sub-tabs -->
                             <div class="sub-tabs-bar" id="completed-subtabs">
-                                <button class="sub-tab-btn active" onclick="setSubTab('completed','all',this)">All <span class="stb-count" id="stb-completed-all">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('completed','delivered',this)">Delivered <span class="stb-count" id="stb-completed-delivered">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('completed','failed_delivery',this)">Failed Delivery <span class="stb-count" id="stb-completed-failed_delivery">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('completed','purchase_rejected',this)">Purchase Rejected <span class="stb-count" id="stb-completed-purchase_rejected">0</span></button>
-                                <button class="sub-tab-btn" onclick="setSubTab('completed','cancelled',this)">Cancelled <span class="stb-count" id="stb-completed-cancelled">0</span></button>
+                                <button class="sub-tab-btn active" data-status="all" onclick="setSubTab('completed','all',this)">All <span class="stb-count" id="stb-completed-all">0</span></button>
+                                <button class="sub-tab-btn" data-status="delivered" onclick="setSubTab('completed','delivered',this)">Delivered <span class="stb-count" id="stb-completed-delivered">0</span></button>
+                                <button class="sub-tab-btn" data-status="failed_delivery" onclick="setSubTab('completed','failed_delivery',this)">Failed Delivery <span class="stb-count" id="stb-completed-failed_delivery">0</span></button>
+                                <button class="sub-tab-btn" data-status="purchase_rejected" onclick="setSubTab('completed','purchase_rejected',this)">Purchase Rejected <span class="stb-count" id="stb-completed-purchase_rejected">0</span></button>
+                                <button class="sub-tab-btn" data-status="cancelled" onclick="setSubTab('completed','cancelled',this)">Cancelled <span class="stb-count" id="stb-completed-cancelled">0</span></button>
                             </div>
                             <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminCompleted-toolbar">
@@ -967,6 +968,9 @@
 <script type="text/html" id="action-buttons-tpl">
     <a href="#" class="btn btn-sm btn-outline-primary border-0 cv-action-btn" data-bind="click: function() { $root.viewRequest($data); }" title="View"><i class="fa fa-eye"></i> View</a>
 
+    <!-- Action buttons are hidden on the "All" sub-tab; visible only on a specific status sub-tab -->
+    <!-- ko if: $root.showCardActions($data) -->
+
     <!-- Marketing Officer: Approve/Reject on REQUESTED -->
     <!-- ko if: status === 'requested' && $root.currentRole() === 'marketing_officer' -->
     <button type="button" class="btn btn-sm btn-success cv-action-btn" data-bind="click: function() { $root.openApproveModal($data); }"><i class="fa fa-check"></i> Approve</button>
@@ -1031,10 +1035,12 @@
     <button type="button" class="btn btn-sm cv-action-btn" style="color:#6f42c1;border-color:#6f42c1;" data-bind="click: function() { $root.forwardToClient($data); }"><i class="fa fa-share"></i> Forward to Client</button>
     <!-- /ko -->
 
-    <!-- Marketing Assistant: Accept/Decline Alternative on ALTERNATIVE_PENDING_CLIENT (records verbal client decision) -->
+    <!-- Marketing Assistant: Accept/Decline Alternative on ALTERNATIVE_PENDING_CLIENT -->
     <!-- ko if: status === 'alternative_pending_client' && $root.currentRole() === 'marketing_assistant' -->
     <button type="button" class="btn btn-sm cv-action-btn" style="color:#28a745;border-color:#28a745;" data-bind="click: function() { $root.acceptAlternative($data); }"><i class="fa fa-check"></i> Accept</button>
     <button type="button" class="btn btn-sm cv-action-btn" style="color:#dc3545;border-color:#dc3545;" data-bind="click: function() { $root.declineAlternative($data); }"><i class="fa fa-times"></i> Decline</button>
+    <!-- /ko -->
+
     <!-- /ko -->
 </script>
 
@@ -1649,9 +1655,19 @@ function AssetRequestViewModel() {
 
     // ===== Sub-tab filter observables (v7.0) =====
     self.pendingReviewSubTab = ko.observable('all');
-    self.inProgressSubTab = ko.observable('all');
-    self.purchaseFlowSubTab = ko.observable('all');
-    self.completedSubTab = ko.observable('all');
+    self.inProgressSubTab    = ko.observable('all');
+    self.purchaseFlowSubTab  = ko.observable('all');
+    self.completedSubTab     = ko.observable('all');
+
+    // Returns true when the card's parent tab is on a SPECIFIC sub-tab (not "All").
+    // Action buttons on cards are hidden when "All" is selected.
+    self.showCardActions = function(r) {
+        if (pendingReviewStatuses.indexOf(r.status) !== -1) return self.pendingReviewSubTab() !== 'all';
+        if (inProgressStatuses.indexOf(r.status) !== -1)   return self.inProgressSubTab()    !== 'all';
+        if (purchaseFlowStatuses.indexOf(r.status) !== -1) return self.purchaseFlowSubTab()  !== 'all';
+        if (completedStatuses.indexOf(r.status) !== -1)    return self.completedSubTab()     !== 'all';
+        return false; // All Requests tab — never show action buttons
+    };
 
     // ===== Helper: build filtered/sorted/grouped computed =====
     function buildFilteredComputed(filterFn, searchObs, sortFieldObs, sortDirObs, groupFieldObs, subTabObs) {
