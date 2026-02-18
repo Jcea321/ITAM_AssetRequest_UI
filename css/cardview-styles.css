@@ -1,0 +1,295 @@
+/**
+ * Appwork.CardView - Base Styles
+ * Theme-agnostic base styles for CardView components
+ * Layout, structure, and non-color properties
+ * Theme-specific colors are in cardview-styles-light.css, cardview-styles-dark.css, and cardview-styles-material.css
+ */
+
+/* Ensure toolbar buttons are visible immediately (before Knockout loads) */
+.cardviews .btn-group {
+    display: inline-flex;
+}
+
+.cardviews .cardview-sort-dropdown-btn,
+.cardviews .cardview-group-dropdown-btn {
+    display: inline-flex;
+}
+
+/* Sort and Group Dropdown Styles */
+.cardviews .cardview-sort-dropdown,
+.cardviews .cardview-group-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.cardviews .cardview-sort-dropdown-btn,
+.cardviews .cardview-group-dropdown-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    /* Border, background, and color handled by Bootstrap btn-default class */
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    margin: 0;
+    white-space: nowrap;
+}
+
+/* Button Group for Sort and Group - Main container */
+.cardviews .cardview-sort-group-btn-group {
+    display: inline-flex;
+    margin: 0;
+}
+
+/* Make all buttons in btn-groups 100% height for equal heights */
+.cardviews .cardview-sort-group-btn-group .btn-group .btn,
+.cardviews .cardview-sort-group-btn-group > .btn {
+    height: 100% !important;
+}
+
+/* Border radius for button groups - first button rounded left, last visible button rounded right */
+/* Default: first button gets left border-radius */
+.cardviews .cardview-sort-group-btn-group .btn-group:first-child .btn {
+    border-radius: 4px 0 0 4px;
+}
+
+/* Default: last button gets right border-radius (will be overridden if hidden) */
+.cardviews .cardview-sort-group-btn-group .btn-group:last-child:not([style*="display: none"]) .btn {
+    border-radius: 0 4px 4px 0;
+}
+
+/* Middle buttons have no border-radius */
+.cardviews .cardview-sort-group-btn-group .btn-group:not(:first-child):not(:last-child) .btn {
+    border-radius: 0;
+}
+
+/* Sort Direction Button, Sort Dropdown, Group Dropdown, and Filter Dropdown - Shared styles */
+.cardviews .cardview-sort-direction-btn,
+.cardviews .cardview-sort-dropdown-btn,
+.cardviews .cardview-group-dropdown-btn,
+.cardviews .cardview-filter-dropdown-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    padding: 6px 10px;
+    font-size: 14px;
+    margin: 0;
+}
+
+.cardviews .cardview-sort-direction-btn:focus,
+.cardviews .cardview-sort-dropdown-btn:focus,
+.cardviews .cardview-group-dropdown-btn:focus,
+.cardviews .cardview-filter-dropdown-btn:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.cardviews .cardview-sort-direction-btn i,
+.cardviews .cardview-sort-dropdown-btn i,
+.cardviews .cardview-group-dropdown-btn i,
+.cardviews .cardview-filter-dropdown-btn i {
+    font-size: 14px;
+}
+
+/* Override border radius when buttons are hidden via visibility */
+/* When sort direction btn-group is hidden, the sort dropdown should have left border radius */
+.cardviews .cardview-sort-group-btn-group .btn-group[style*="display: none"]:first-child + .btn-group .cardview-sort-dropdown-btn {
+    border-radius: 4px 0 0 4px !important;
+}
+
+/* When sort dropdown group is hidden, the group dropdown should have left border radius */
+.cardviews .cardview-sort-group-btn-group .btn-group[style*="display: none"]:nth-child(2) + .btn-group .cardview-group-dropdown-btn {
+    border-radius: 4px 0 0 4px !important;
+}
+
+/* When only group dropdown is visible (both sort btn-groups hidden), give it full border radius */
+.cardviews .cardview-sort-group-btn-group .btn-group[style*="display: none"]:first-child + .btn-group[style*="display: none"] + .btn-group .cardview-group-dropdown-btn {
+    border-radius: 4px !important;
+}
+
+/* When group dropdown (last) is hidden, sort dropdown becomes last visible and should have right border radius */
+.cardviews .cardview-sort-group-btn-group .btn-group:nth-child(2) + .btn-group:last-child[style*="display: none"] ~ .btn-group:nth-child(2) .cardview-sort-dropdown-btn,
+.cardviews .cardview-sort-group-btn-group .btn-group:nth-child(2) + .btn-group:last-child[style*="display: none"] + .btn-group:nth-child(2) .cardview-sort-dropdown-btn {
+    border-radius: 0 4px 4px 0 !important;
+}
+
+/* When both sort dropdown and group dropdown are hidden, sort direction becomes last visible and should have right border radius */
+.cardviews .cardview-sort-group-btn-group .btn-group:first-child + .btn-group:nth-child(2)[style*="display: none"] + .btn-group:last-child[style*="display: none"] ~ .btn-group:first-child .cardview-sort-direction-btn,
+.cardviews .cardview-sort-group-btn-group .btn-group:first-child + .btn-group:nth-child(2)[style*="display: none"] + .btn-group:last-child[style*="display: none"] + .btn-group:first-child .cardview-sort-direction-btn {
+    border-radius: 0 4px 4px 0 !important;
+}
+
+.cardviews .cardview-sort-dropdown-menu,
+.cardviews .cardview-group-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 200px;
+    margin-top: 4px;
+    padding: 8px 0;
+    border: 1px solid;
+    border-radius: 4px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+    /* Background and border colors handled by theme-specific CSS */
+}
+
+.cardviews .cardview-sort-dropdown.open .cardview-sort-dropdown-menu,
+.cardviews .cardview-group-dropdown.open .cardview-group-dropdown-menu {
+    display: block;
+}
+
+.cardviews .cardview-sort-dropdown-menu-item,
+.cardviews .cardview-group-dropdown-menu-item {
+    display: block;
+    padding: 8px 16px;
+    margin-bottom: 8px;
+}
+
+.cardviews .cardview-group-dropdown-menu-item:last-child {
+    margin-bottom: 0;
+}
+
+.cardviews .cardview-sort-dropdown-menu-item .custom-control,
+.cardviews .cardview-group-dropdown-menu-item .custom-control {
+    margin-bottom: 8px;
+    padding-left: 0;
+}
+
+.cardviews .cardview-sort-dropdown-menu-item .custom-control-label,
+.cardviews .cardview-group-dropdown-menu-item .custom-control-label {
+    padding-left: 1.5rem;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* Clear sort/group option styling */
+.cardviews .cardview-sort-dropdown-menu-item.clear-sort,
+.cardviews .cardview-group-dropdown-menu-item.clear-group {
+    border-top: 1px solid;
+    margin-top: 4px;
+    padding-top: 12px;
+    /* Border color handled by theme-specific CSS */
+}
+
+.cardviews .cardview-sort-dropdown-menu-item.clear-sort .custom-control-label,
+.cardviews .cardview-group-dropdown-menu-item.clear-group .custom-control-label {
+    /* Color handled by text-muted class in HTML */
+    font-style: italic;
+}
+
+/* Hover state handled by theme-specific CSS */
+
+/* Sort and Group Dropdown Actions (Apply/Reset buttons) */
+.cardviews .cardview-sort-dropdown-actions,
+.cardviews .cardview-group-dropdown-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px 16px;
+    border-top: 1px solid;
+    margin-top: 4px;
+    justify-content: flex-end;
+    /* Border color handled by theme-specific CSS */
+}
+
+
+/* Filter Dropdown Styles */
+.cardviews .cardview-filter-dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.cardviews .cardview-filter-dropdown-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border: 1px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    margin: 0;
+    white-space: nowrap;
+    /* Border, background, and color handled by theme-specific CSS */
+}
+
+/* Hover state handled by theme-specific CSS */
+
+.cardviews .cardview-filter-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 1000;
+    min-width: 200px;
+    margin-top: 4px;
+    padding: 8px 0;
+    border: 1px solid;
+    border-radius: 4px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.175);
+    /* Background and border colors handled by theme-specific CSS */
+}
+
+.cardviews .cardview-filter-dropdown.open .cardview-filter-dropdown-menu {
+    display: block;
+}
+
+/* Nested Grouping Styles */
+/* Group Header - colors handled by theme-specific CSS */
+.cardviews .cardview-group-header {
+    border: 1px solid;
+    /* Background color handled by theme-specific CSS */
+}
+
+/* Hover state handled by theme-specific CSS */
+
+.cardviews .cardview-group-header[data-level="1"] {
+    padding-left: 20px;
+    border-left: 3px solid #007bff;
+    /* Background color handled by theme-specific CSS */
+}
+
+.cardviews .cardview-group-header[data-level="2"] {
+    padding-left: 40px;
+    border-left: 3px solid #28a745;
+    /* Background color handled by theme-specific CSS */
+}
+
+.cardviews .cardview-group-header[data-level="3"] {
+    padding-left: 60px;
+    border-left: 3px solid #ffc107;
+    /* Background color handled by theme-specific CSS */
+}
+
+/* Alternate Actions Dropdown - colors handled by theme-specific CSS */
+.cardviews .cv-actions .cardview-action-alternate .dropdown-menu {
+    border: 1px solid;
+    /* Background color handled by theme-specific CSS */
+}
+
+/* Car Color Dots */
+.car-color-dots {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    margin: 0 4px;
+}
+
+.car-color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .cardviews .cardview-sort-dropdown-menu {
+        min-width: 180px;
+    }
+}

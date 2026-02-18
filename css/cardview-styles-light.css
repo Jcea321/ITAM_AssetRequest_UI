@@ -1,0 +1,78 @@
+/**
+ * Appwork.CardView - Light Theme Styles
+ * Theme-specific styles for light mode
+ * Follows naming convention: {name}-light.css
+ * This file is loaded conditionally when light theme is active
+ */
+
+/* Dropdown menu background */
+.cardviews .cardview-sort-dropdown-menu,
+.cardviews .cardview-group-dropdown-menu {
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* Clear sort/group border */
+.cardviews .cardview-sort-dropdown-menu-item.clear-sort,
+.cardviews .cardview-group-dropdown-menu-item.clear-group {
+    border-top-color: #e0e0e0;
+}
+
+.cardviews .cardview-sort-dropdown-menu-item.clear-sort:hover,
+.cardviews .cardview-group-dropdown-menu-item.clear-group:hover {
+    background-color: #fff3cd;
+}
+
+/* Actions border */
+.cardviews .cardview-sort-dropdown-actions,
+.cardviews .cardview-group-dropdown-actions {
+    border-top-color: #e0e0e0;
+}
+
+/* Filter dropdown button colors */
+.cardviews .cardview-filter-dropdown-btn {
+    border: 1px solid #ddd;
+    background: #fff;
+    color: #333;
+}
+
+.cardviews .cardview-filter-dropdown-btn:hover {
+    background: #f5f5f5;
+    border-color: #bbb;
+}
+
+/* Filter dropdown menu colors */
+.cardviews .cardview-filter-dropdown-menu {
+    background-color: #fff;
+    border: 1px solid #ccc;
+}
+
+/* Group header colors */
+.cardviews .cardview-group-header {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+}
+
+.cardviews .cardview-group-header:hover {
+    background-color: #e9ecef;
+}
+
+/* Level-specific group header colors */
+.cardviews .cardview-group-header[data-level="1"] {
+    background-color: #f8f9fa;
+}
+
+.cardviews .cardview-group-header[data-level="2"] {
+    background-color: #e9ecef;
+}
+
+.cardviews .cardview-group-header[data-level="3"] {
+    background-color: #dee2e6;
+}
+
+/* Alternate actions dropdown colors */
+.cardviews .cv-actions .cardview-action-alternate .dropdown-menu {
+    background-color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+}
+

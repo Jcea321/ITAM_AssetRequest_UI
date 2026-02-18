@@ -1,0 +1,2331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ITAM - Asset Request Prototype v7.0 (Multi-Role Fulfillment Workflow)</title>
+
+    <!-- Local Libraries -->
+    <link href="libs/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+    <link href="libs/fontawesome/css/fontawesome.css" rel="stylesheet">
+    <link href="libs/ionicons/ionicons.min.css" rel="stylesheet">
+    <link href="libs/select2/css/select2.min.css" rel="stylesheet">
+    <link href="libs/select2/css/select2-bootstrap-5-theme.min.css" rel="stylesheet">
+
+    <!-- ITAM CardView CSS -->
+    <link href="css/cardview-core.css" rel="stylesheet">
+    <link href="css/cardview-skeleton.css" rel="stylesheet">
+    <link href="css/cardview-styles.css" rel="stylesheet">
+    <link href="css/cardview-styles-light.css" rel="stylesheet">
+
+    <style>
+        /* ===================================================================
+           ITAM ASSET REQUEST PROTOTYPE v7.0
+           - 4 Roles: Marketing Assistant, Marketing Officer, Inventory Clerk,
+                       Finance Manager
+           - 20+ granular statuses for full workflow lifecycle
+           - Role-based action visibility on cards
+           - 4 Scenario flows: Purchase Approval, Purchase Rejection,
+                                Alternative Accepted, Direct Fulfillment
+           =================================================================== */
+
+        :root {
+            --primary: #5b67c7;
+            --primary-hover: #4a56b5;
+            --success: #28a745;
+            --warning: #ffc107;
+            --danger: #dc3545;
+            --info: #17a2b8;
+            --muted: #6c757d;
+            --bg-light: #f5f5f9;
+            --border-color: #e0e0e0;
+            --sidebar-width: 260px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            font-size: 0.875rem;
+            background-color: var(--bg-light);
+            margin: 0; padding: 0; color: #333;
+        }
+
+        /* ===== LAYOUT ===== */
+        .layout-wrapper { display: flex; min-height: 100vh; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: var(--sidebar-width); background: #2e323a; color: #a0a4b0;
+            position: fixed; top: 0; bottom: 0; left: 0; z-index: 1000; overflow-y: auto;
+        }
+        .sidebar-brand {
+            display: flex; align-items: center; padding: 1rem 1.25rem;
+            font-size: 1.1rem; font-weight: 600; color: #fff;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .sidebar-brand i { font-size: 1.4rem; margin-right: 0.6rem; color: var(--primary); }
+        .sidebar-menu { list-style: none; padding: 0.75rem 0; margin: 0; }
+        .sidebar-menu li a {
+            display: flex; align-items: center; padding: 0.6rem 1.25rem;
+            color: #a0a4b0; text-decoration: none; font-size: 0.85rem;
+            transition: all 0.2s; border-left: 3px solid transparent;
+        }
+        .sidebar-menu li a:hover, .sidebar-menu li a.active {
+            color: #fff; background: rgba(255,255,255,0.05); border-left-color: var(--primary);
+        }
+        .sidebar-menu li a i { font-size: 1.15rem; width: 28px; margin-right: 0.5rem; text-align: center; }
+        .sidebar-menu .menu-header {
+            padding: 1.2rem 1.25rem 0.4rem; font-size: 0.7rem;
+            text-transform: uppercase; letter-spacing: 1px; color: #666; font-weight: 600;
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; }
+
+        /* ===== TOP NAVBAR ===== */
+        .top-navbar {
+            background: #fff; border-bottom: 1px solid var(--border-color);
+            padding: 0 1.5rem; height: 56px; display: flex; align-items: center;
+            justify-content: space-between; position: sticky; top: 0; z-index: 900;
+        }
+        .top-navbar .breadcrumb { margin: 0; background: transparent; padding: 0; font-size: 0.85rem; }
+        .top-navbar .user-info { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #555; }
+        .top-navbar .user-info .avatar {
+            width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: #fff;
+            display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.75rem;
+        }
+
+        /* ===== PAGE CONTENT ===== */
+        .page-content { padding: 1.5rem; flex: 1; }
+        .page-title-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+        .page-title-bar h1 { font-size: 1.35rem; font-weight: 600; margin: 0; color: #333; }
+
+        /* ===== VIEW SWITCHER ===== */
+        .view-switcher {
+            display: flex; gap: 0.5rem; margin-bottom: 1.5rem;
+            background: #fff; padding: 0.4rem; border-radius: 8px;
+            border: 1px solid var(--border-color); width: fit-content;
+        }
+        .view-switcher .view-btn {
+            padding: 0.45rem 1.1rem; border: none; background: transparent;
+            border-radius: 6px; font-size: 0.82rem; font-weight: 500;
+            color: #666; cursor: pointer; transition: all 0.2s;
+        }
+        .view-switcher .view-btn.active {
+            background: var(--primary); color: #fff; box-shadow: 0 2px 6px rgba(91,103,199,0.3);
+        }
+        .view-switcher .view-btn:hover:not(.active) { background: #f0f0f0; }
+
+        /* ===== CARDS ===== */
+        .card { border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .card-body { padding: 1.25rem; }
+
+        /* ===== FORM STYLES ===== */
+        .form-label { font-weight: 500; font-size: 0.82rem; color: #555; margin-bottom: 0.3rem; }
+        .form-control, .form-select {
+            font-size: 0.85rem; border-color: #d4d4d4; border-radius: 6px; padding: 0.5rem 0.75rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary); box-shadow: 0 0 0 0.2rem rgba(91,103,199,0.15);
+        }
+        textarea.form-control { resize: vertical; min-height: 100px; }
+
+        /* ===== BUTTONS ===== */
+        .btn-primary { background-color: var(--primary); border-color: var(--primary); }
+        .btn-primary:hover { background-color: var(--primary-hover); border-color: var(--primary-hover); }
+        .btn { font-size: 0.85rem; border-radius: 6px; padding: 0.45rem 1rem; }
+        .btn i { margin-right: 0.3rem; }
+
+        /* ===== PRIORITY ===== */
+        .priority-low      { color: var(--info); font-weight: 500; }
+        .priority-medium   { color: var(--warning); font-weight: 600; }
+        .priority-high     { color: #fd7e14; font-weight: 600; }
+        .priority-critical { color: var(--danger); font-weight: 700; }
+
+        /* ===== STATS CARDS ===== */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card {
+            background: #fff; border: 1px solid var(--border-color); border-radius: 10px;
+            padding: 1.1rem 1.25rem; display: flex; align-items: center; gap: 1rem; transition: transform 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-2px); }
+        .stat-card .stat-icon {
+            width: 48px; height: 48px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center; font-size: 1.3rem;
+        }
+        .stat-card .stat-icon.bg-pending  { background: #fff3cd; color: #856404; }
+        .stat-card .stat-icon.bg-approved { background: #d4edda; color: #155724; }
+        .stat-card .stat-icon.bg-inprogress { background: #cce5ff; color: #004085; }
+        .stat-card .stat-icon.bg-purchase { background: #ffe8cc; color: #854d0e; }
+        .stat-card .stat-icon.bg-completed { background: #e2e3e5; color: #383d41; }
+        .stat-card .stat-icon.bg-total    { background: #e8e8ff; color: var(--primary); }
+        .stat-card .stat-info h3 { font-size: 1.5rem; font-weight: 700; margin: 0; color: #333; }
+        .stat-card .stat-info p { margin: 0; font-size: 0.78rem; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        /* ===== CARDVIEW TOOLBAR ===== */
+        .cardview-toolbar {
+            display: flex; align-items: center; gap: 0; padding: 0.5rem 0.75rem;
+            background: #fff; border: 1px solid var(--border-color); border-radius: 8px;
+            margin-bottom: 1rem; min-height: 42px; flex-wrap: nowrap;
+        }
+        .cardview-toolbar .toolbar-section { display: flex; align-items: center; gap: 0.4rem; }
+        .cardview-toolbar .toolbar-separator { width: 1px; height: 24px; background: var(--border-color); margin: 0 0.6rem; flex-shrink: 0; }
+        .cardview-toolbar .sort-direction-btn {
+            display: flex; align-items: center; justify-content: center; width: 32px; height: 32px;
+            border: 1px solid #c0d0e8; border-radius: 5px; background: #eef3fb; color: #3b7ddd;
+            cursor: pointer; font-size: 1rem; transition: all 0.15s; flex-shrink: 0;
+        }
+        .cardview-toolbar .sort-direction-btn:hover { background: #d8e5f7; border-color: #3b7ddd; }
+        .cardview-toolbar .sort-dropdown-btn, .cardview-toolbar .group-dropdown-btn {
+            display: flex; align-items: center; gap: 0.35rem; padding: 0.3rem 0.7rem;
+            border: 1px solid #d4d4d4; border-radius: 5px; background: #fff; color: #555;
+            cursor: pointer; font-size: 0.82rem; font-weight: 500; white-space: nowrap;
+            transition: all 0.15s; position: relative;
+        }
+        .cardview-toolbar .sort-dropdown-btn:hover, .cardview-toolbar .group-dropdown-btn:hover { background: #f8f9fa; border-color: #bbb; }
+        .cardview-toolbar .group-dropdown-btn .group-icon { font-size: 0.95rem; display: flex; align-items: center; }
+        .cardview-toolbar .toolbar-search {
+            border: 1px solid #d4d4d4; border-radius: 5px; padding: 0.3rem 0.6rem;
+            font-size: 0.82rem; width: 180px; outline: none; transition: border-color 0.15s;
+        }
+        .cardview-toolbar .toolbar-search:focus { border-color: var(--primary); box-shadow: 0 0 0 0.15rem rgba(91,103,199,0.12); }
+        .cardview-toolbar .toolbar-counter { font-size: 0.78rem; color: #888; white-space: nowrap; margin-left: auto; padding: 0 0.5rem; }
+        .cardview-toolbar .toolbar-add-btn {
+            display: flex; align-items: center; gap: 0.3rem; padding: 0.35rem 0.85rem;
+            border: none; border-radius: 5px; background: #0dcaf0; color: #fff;
+            cursor: pointer; font-size: 0.82rem; font-weight: 600; white-space: nowrap;
+            transition: background 0.15s; flex-shrink: 0;
+        }
+        .cardview-toolbar .toolbar-add-btn:hover { background: #0ab5d8; }
+
+        /* Toolbar dropdown menu */
+        .toolbar-dropdown-menu {
+            position: absolute; top: 100%; left: 0; z-index: 1050; min-width: 200px;
+            padding: 0.35rem 0; margin-top: 4px; background: #fff;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.12); display: none;
+        }
+        .toolbar-dropdown-menu.show { display: block; }
+        .toolbar-dropdown-menu .dropdown-item {
+            display: flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem;
+            font-size: 0.82rem; color: #555; cursor: pointer; transition: background 0.1s;
+            border: none; background: none; width: 100%; text-align: left;
+        }
+        .toolbar-dropdown-menu .dropdown-item:hover { background: #f0f2ff; color: var(--primary); }
+        .toolbar-dropdown-menu .dropdown-item.active { background: #eef0ff; color: var(--primary); font-weight: 600; }
+        .toolbar-dropdown-menu .dropdown-item .checkmark { width: 16px; font-size: 0.7rem; color: var(--primary); }
+
+        /* ===== GROUP HEADER ===== */
+        .group-header {
+            font-size: 0.82rem; font-weight: 700; color: #555; background: #f0f2ff;
+            border: 1px solid #dde0f5; border-radius: 6px; padding: 0.5rem 0.85rem;
+            margin: 1rem 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .group-header:first-child { margin-top: 0; }
+
+        /* ===== TABLE ===== */
+        .table { font-size: 0.84rem; }
+        .table thead th {
+            background: #f8f9fa; border-bottom: 2px solid var(--border-color);
+            font-weight: 600; font-size: 0.78rem; text-transform: uppercase;
+            letter-spacing: 0.5px; color: #666; padding: 0.75rem; white-space: nowrap;
+        }
+        .table tbody td { padding: 0.75rem; vertical-align: middle; border-bottom: 1px solid #f0f0f0; }
+        .table tbody tr:hover { background: #fafbff; }
+        .table .action-btns { display: flex; gap: 0.35rem; }
+        .table .action-btns .btn { padding: 0.25rem 0.5rem; font-size: 0.78rem; }
+
+        /* ===== NAV TABS TOP ===== */
+        .nav-tabs-top { background: #fff; border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; }
+        .nav-tabs-top .nav-tabs { border-bottom: 2px solid #f0f0f0; padding: 0 1rem; }
+        .nav-tabs-top .nav-tabs .nav-link {
+            border: none; color: #888; font-size: 0.85rem; font-weight: 500;
+            padding: 0.85rem 1.1rem; border-bottom: 2px solid transparent;
+            margin-bottom: -2px; transition: all 0.2s;
+        }
+        .nav-tabs-top .nav-tabs .nav-link:hover { color: var(--primary); }
+        .nav-tabs-top .nav-tabs .nav-link.active { color: var(--primary); border-bottom-color: var(--primary); background: transparent; }
+        .nav-tabs-top .tab-content { padding: 1.25rem; }
+
+        /* ===== MODAL ===== */
+        .modal-header { background: #f8f9fa; border-bottom: 1px solid var(--border-color); padding: 1rem 1.25rem; }
+        .modal-title { font-size: 1rem; font-weight: 600; }
+        .modal-body { padding: 1.25rem; }
+        .modal-footer { border-top: 1px solid var(--border-color); padding: 0.85rem 1.25rem; }
+
+        /* ===== TIMELINE ===== */
+        .request-timeline { position: relative; padding-left: 1.5rem; margin-top: 1rem; }
+        .request-timeline::before { content: ''; position: absolute; left: 6px; top: 0; bottom: 0; width: 2px; background: #e0e0e0; }
+        .timeline-item { position: relative; padding-bottom: 1rem; padding-left: 1rem; }
+        .timeline-item::before {
+            content: ''; position: absolute; left: -1.5rem; top: 4px;
+            width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--primary); background: #fff;
+        }
+        .timeline-item.active::before { background: var(--primary); }
+        .timeline-item .timeline-date { font-size: 0.72rem; color: #999; }
+        .timeline-item .timeline-text { font-size: 0.82rem; color: #555; }
+
+        /* ===== DETAIL ROW ===== */
+        .detail-row { display: flex; gap: 0.5rem; padding: 0.5rem 0; border-bottom: 1px solid #f5f5f5; }
+        .detail-row .detail-label { font-weight: 600; font-size: 0.8rem; color: #888; min-width: 140px; text-transform: uppercase; letter-spacing: 0.3px; }
+        .detail-row .detail-value { font-size: 0.85rem; color: #333; }
+
+        /* ===== VIEW PANEL ===== */
+        .view-panel { display: none; }
+        .view-panel.active { display: block; }
+
+        /* ===== PERSON TYPE BADGES ===== */
+        .person-type-badge {
+            display: inline-flex; align-items: center; padding: 0.15rem 0.5rem;
+            border-radius: 4px; font-size: 0.68rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 0.5px; margin-left: 0.4rem;
+        }
+        .person-type-badge.badge-employee { background: #e8e8ff; color: var(--primary); border: 1px solid #c8c8ef; }
+        .person-type-badge.badge-consultant { background: #fff3e0; color: #e65100; border: 1px solid #ffcc80; }
+
+        /* ===== REQUESTED FOR - Person Display on Cards ===== */
+        .cv-requested-for {
+            display: flex; align-items: center; gap: 0.5rem;
+            margin: 0.35rem 0 0.2rem; padding: 0.3rem 0.55rem;
+            background: #f4f5fb; border: 1px solid #e4e6f0; border-radius: 6px;
+            font-size: 0.82rem;
+        }
+        .cv-requested-for .cv-person-avatar {
+            width: 26px; height: 26px; border-radius: 50%; color: #fff;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.62rem; font-weight: 600; flex-shrink: 0;
+        }
+        .cv-requested-for .cv-person-name { font-weight: 600; color: #333; }
+        .cv-requested-for .person-type-badge { margin-left: 0; }
+
+        /* ===== PERSON METADATA PANEL ===== */
+        .person-metadata-panel {
+            background: #f8f9fa; border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 1rem; margin-top: 1rem; display: none;
+        }
+        .person-metadata-panel.show { display: block; }
+        .person-metadata-panel .person-header {
+            display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem;
+            padding-bottom: 0.75rem; border-bottom: 1px solid #e8e8e8;
+        }
+        .person-metadata-panel .person-avatar {
+            width: 42px; height: 42px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-weight: 700;
+            font-size: 0.85rem; color: #fff; flex-shrink: 0;
+        }
+        .person-metadata-panel .person-name { font-weight: 600; font-size: 0.95rem; color: #333; }
+        .person-metadata-panel .person-id { font-size: 0.75rem; color: #999; }
+        .person-metadata-panel .meta-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1.5rem;
+        }
+        .person-metadata-panel .meta-item { display: flex; flex-direction: column; }
+        .person-metadata-panel .meta-label { font-size: 0.7rem; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.3px; }
+        .person-metadata-panel .meta-value { font-size: 0.82rem; color: #333; }
+
+        /* ===== PERSON TYPE SELECTOR ===== */
+        .person-type-selector {
+            display: flex; gap: 0; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden;
+        }
+        .person-type-selector .type-option {
+            flex: 1; padding: 0.5rem 0.75rem; border: none; background: #fff;
+            font-size: 0.82rem; font-weight: 500; color: #666; cursor: pointer;
+            transition: all 0.2s; text-align: center;
+        }
+        .person-type-selector .type-option:first-child { border-right: 1px solid var(--border-color); }
+        .person-type-selector .type-option.active { color: #fff; font-weight: 600; }
+        .person-type-selector .type-option.active.type-employee { background: var(--primary); }
+        .person-type-selector .type-option.active.type-consultant { background: #e65100; }
+        .person-type-selector .type-option:hover:not(.active) { background: #f5f5f5; }
+
+        /* ===== SELECT2 CUSTOM FOR PERSON DROPDOWN ===== */
+        .select2-results__option .person-option-row {
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+        .select2-results__option .person-option-avatar {
+            width: 24px; height: 24px; border-radius: 50%; display: flex;
+            align-items: center; justify-content: center; font-size: 0.55rem;
+            font-weight: 700; color: #fff; flex-shrink: 0;
+        }
+        .select2-results__option .person-option-name { font-size: 0.82rem; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 992px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="layout-wrapper">
+
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="sidebar-brand"><i class="ion ion-md-cube"></i> ITAM</div>
+        <ul class="sidebar-menu">
+            <li class="menu-header">Asset Management</li>
+            <li><a href="#"><i class="ion ion-md-cube"></i> Hardware Assets</a></li>
+            <li><a href="#" class="active"><i class="ion ion-md-document"></i> Asset Requests</a></li>
+            <li class="menu-header">Settings</li>
+            <li><a href="#"><i class="ion ion-md-folder"></i> Categories</a></li>
+            <li><a href="#"><i class="ion ion-md-pricetag"></i> Brands</a></li>
+            <li><a href="#"><i class="ion ion-md-flag"></i> Statuses</a></li>
+            <li class="menu-header">Sync</li>
+            <li><a href="#"><i class="ion ion-md-people"></i> Employee Sync</a></li>
+            <li><a href="#"><i class="ion ion-md-briefcase"></i> Consultant Sync</a></li>
+        </ul>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main-content">
+        <div class="top-navbar">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="#" style="color: var(--primary); text-decoration: none;">ITAM</a></li>
+                    <li class="breadcrumb-item active" id="breadcrumb-current">Asset Requests</li>
+                </ol>
+            </nav>
+            <div class="user-info">
+                <div class="role-switcher" style="display:flex;align-items:center;gap:0.5rem;margin-right:1rem;">
+                    <label style="font-size:0.75rem;color:#888;text-transform:uppercase;letter-spacing:0.5px;margin:0;">Role:</label>
+                    <select class="form-select form-select-sm" id="roleSwitcher" onchange="switchRole(this.value)" style="font-size:0.8rem;width:auto;padding:0.25rem 2rem 0.25rem 0.5rem;border-radius:6px;">
+                        <option value="marketing_assistant">Marketing Assistant</option>
+                        <option value="marketing_officer">Marketing Officer</option>
+                        <option value="inventory_clerk">Inventory Clerk</option>
+                        <option value="finance_manager">Finance Manager</option>
+                    </select>
+                </div>
+                <span id="currentUserName">Juan Dela Cruz</span><div class="avatar" id="currentUserAvatar">JD</div>
+            </div>
+        </div>
+
+        <div class="page-content">
+
+            <!-- ===== VIEW SWITCHER ===== -->
+            <div class="view-switcher" id="viewSwitcher">
+                <button class="view-btn active" onclick="switchView('employee')"><i class="ion ion-md-person"></i> My Requests</button>
+                <button class="view-btn" id="manageRequestsBtn" onclick="switchView('admin')"><i class="ion ion-md-settings"></i> Manage Requests</button>
+            </div>
+
+            <!-- ============================================================ -->
+            <!--  EMPLOYEE VIEW: My Requests (Knockout.js CardView)           -->
+            <!-- ============================================================ -->
+            <div class="view-panel active" id="view-employee">
+                <div class="page-title-bar">
+                    <h1><i class="fa fa-clipboard-list" style="color: var(--primary); margin-right: 0.4rem;"></i> My Asset Requests</h1>
+                </div>
+
+                <!-- Employee Stats -->
+                <div class="stats-row" data-bind="with: employeeStats">
+                    <div class="stat-card"><div class="stat-icon bg-total"><i class="fa fa-file-alt"></i></div><div class="stat-info"><h3 data-bind="text: total">0</h3><p>Total Requests</p></div></div>
+                    <div class="stat-card"><div class="stat-icon bg-pending"><i class="fa fa-clock"></i></div><div class="stat-info"><h3 data-bind="text: pending">0</h3><p>Pending</p></div></div>
+                    <div class="stat-card"><div class="stat-icon bg-inprogress"><i class="fa fa-spinner"></i></div><div class="stat-info"><h3 data-bind="text: inProgress">0</h3><p>In Progress</p></div></div>
+                    <div class="stat-card"><div class="stat-icon bg-completed"><i class="fa fa-check-circle"></i></div><div class="stat-info"><h3 data-bind="text: completed">0</h3><p>Completed</p></div></div>
+                </div>
+
+                <!-- CardView Toolbar -->
+                <div class="cardview-toolbar" id="employee-toolbar">
+                    <div class="toolbar-section">
+                        <button class="sort-direction-btn" id="empSortDirBtn" onclick="toggleSortDirection('employee')" title="Toggle sort direction">
+                            <i class="fa fa-sort-amount-down" id="empSortDirIcon"></i>
+                        </button>
+                    </div>
+                    <div class="toolbar-section" style="position:relative;">
+                        <button class="sort-dropdown-btn" onclick="toggleDropdown('empSortMenu')">
+                            <span id="empSortLabel">Sort by Submitted date</span>
+                            <i class="fa fa-caret-down" style="font-size:0.75rem;"></i>
+                        </button>
+                        <div class="toolbar-dropdown-menu" id="empSortMenu">
+                            <button class="dropdown-item active" onclick="setSort('employee','submitted','Submitted date')"><span class="checkmark">&#10003;</span> Submitted date</button>
+                            <button class="dropdown-item" onclick="setSort('employee','neededby','Needed by date')"><span class="checkmark">&nbsp;</span> Needed by date</button>
+                            <button class="dropdown-item" onclick="setSort('employee','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                            <button class="dropdown-item" onclick="setSort('employee','category','Category')"><span class="checkmark">&nbsp;</span> Category</button>
+                            <button class="dropdown-item" onclick="setSort('employee','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-separator"></div>
+                    <div class="toolbar-section" style="position:relative;">
+                        <button class="group-dropdown-btn" onclick="toggleDropdown('empGroupMenu')">
+                            <span class="group-icon"><i class="fa fa-layer-group"></i></span>
+                            <span id="empGroupLabel">Group by</span>
+                            <i class="fa fa-caret-down" style="font-size:0.75rem;"></i>
+                        </button>
+                        <div class="toolbar-dropdown-menu" id="empGroupMenu">
+                            <button class="dropdown-item active" onclick="setGroup('employee','none','Group by')"><span class="checkmark">&#10003;</span> None</button>
+                            <button class="dropdown-item" onclick="setGroup('employee','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                            <button class="dropdown-item" onclick="setGroup('employee','category','Category')"><span class="checkmark">&nbsp;</span> Category</button>
+                            <button class="dropdown-item" onclick="setGroup('employee','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                        </div>
+                    </div>
+                    <div class="toolbar-separator"></div>
+                    <div class="toolbar-section">
+                        <input type="text" class="toolbar-search" id="empSearchInput" placeholder="Search..." oninput="applyToolbar('employee')">
+                    </div>
+                    <span class="toolbar-counter" id="empCounter">Showing 0 of 0 items</span>
+                    <button class="toolbar-add-btn" data-bs-toggle="modal" data-bs-target="#createRequestModal" data-bind="visible: $root.currentRole() === 'marketing_assistant'"><i class="fa fa-plus" style="margin-right:0;"></i> New Request</button>
+                </div>
+
+                <!-- ===== KNOCKOUT-DRIVEN REQUEST CARDS ===== -->
+                <div class="cardviews" id="employee-requests-list" data-bind="foreach: filteredEmployeeRequests">
+                    <!-- ko if: $data._isGroupHeader -->
+                    <div class="group-header" data-bind="text: label"></div>
+                    <!-- /ko -->
+                    <!-- ko ifnot: $data._isGroupHeader -->
+                    <div class="cardview-item">
+                        <div class="card-view" data-bind="style: { borderLeft: '5px solid ' + statusColor }">
+                            <div class="card-view-contents">
+                                <div class="cv-icon-column">
+                                    <i class="fa-2x" data-bind="css: icon, style: { color: statusColor }"></i>
+                                </div>
+                                <div class="cv-content-column">
+                                    <div class="cv-row">
+                                        <div class="cv-title-wrapper">
+                                            <div class="cv-title" data-bind="html: titleHtml"></div>
+                                        </div>
+                                        <div class="cv-status">
+                                            <div class="cv-status-inner" data-bind="text: statusText, style: { backgroundColor: statusBgColor, border: '1px solid ' + statusColor, color: statusTextColor }"></div>
+                                        </div>
+                                    </div>
+                                    <div class="cv-subtitle" data-bind="html: subtitleHtml"></div>
+                                    <div class="cv-requested-for">
+                                        <div class="cv-person-avatar" data-bind="text: employeeInitials, style: { backgroundColor: employeeAvatarColor }"></div>
+                                        <span class="cv-person-name" data-bind="text: employeeName"></span>
+                                        <span class="person-type-badge" data-bind="text: personType === 'consultant' ? 'CON' : 'EMP', css: personType === 'consultant' ? 'badge-consultant' : 'badge-employee'"></span>
+                                    </div>
+                                    <div class="cv-description" data-bind="text: description"></div>
+                                    <!-- ko if: remarks -->
+                                    <div class="cv-subdescription" data-bind="html: remarks, style: { fontSize: '0.8rem', color: remarksTextColor, background: remarksBgColor, border: '1px solid ' + remarksBorderColor, borderRadius: '4px', padding: '0.4rem 0.6rem', marginBottom: '4px' }"></div>
+                                    <!-- /ko -->
+                                    <div class="cv-actions">
+                                        <div class="cardview-action-primary">
+                                            <a href="#" class="btn btn-sm btn-outline-primary border-0 cv-action-btn" data-bind="click: function() { $root.viewRequest($data); }" title="View"><i class="fa fa-eye"></i> View</a>
+                                            <!-- Marketing Assistant: Accept/Decline Alternative (verbal confirmation from client) -->
+                                            <!-- ko if: status === 'alternative_pending_client' && $root.currentRole() === 'marketing_assistant' -->
+                                            <button type="button" class="btn btn-sm cv-action-btn" style="color:#28a745;border-color:#28a745;" data-bind="click: function() { $root.acceptAlternative($data); }" title="Accept"><i class="fa fa-check"></i> Accept</button>
+                                            <button type="button" class="btn btn-sm cv-action-btn" style="color:#dc3545;border-color:#dc3545;" data-bind="click: function() { $root.declineAlternative($data); }" title="Decline"><i class="fa fa-times"></i> Decline</button>
+                                            <!-- /ko -->
+                                            <!-- Marketing Assistant: Cancel on REQUESTED -->
+                                            <!-- ko if: status === 'requested' && $root.currentRole() === 'marketing_assistant' -->
+                                            <button type="button" class="btn btn-sm btn-outline-danger border-0 cv-action-btn" data-bind="click: function() { $root.cancelRequest($data); }" title="Cancel"><i class="fa fa-times"></i> Cancel</button>
+                                            <!-- /ko -->
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- /ko -->
+                </div>
+            </div>
+
+            <!-- ============================================================ -->
+            <!--  ADMIN VIEW: Manage All Requests                            -->
+            <!-- ============================================================ -->
+            <div class="view-panel" id="view-admin">
+                <div class="page-title-bar">
+                    <h1><i class="fa fa-clipboard-check" style="color: var(--primary); margin-right: 0.4rem;"></i> Manage Asset Requests</h1>
+                </div>
+
+                <!-- Admin Stats -->
+                <div class="stats-row" data-bind="with: adminStats">
+                    <div class="stat-card"><div class="stat-icon bg-total"><i class="fa fa-file-alt"></i></div><div class="stat-info"><h3 data-bind="text: total">0</h3><p>Total</p></div></div>
+                    <div class="stat-card"><div class="stat-icon bg-pending"><i class="fa fa-clock"></i></div><div class="stat-info"><h3 data-bind="text: pendingReview">0</h3><p>Pending Review</p></div></div>
+                    <div class="stat-card"><div class="stat-icon bg-inprogress"><i class="fa fa-spinner"></i></div><div class="stat-info"><h3 data-bind="text: inProgress">0</h3><p>In Progress</p></div></div>
+                    <div class="stat-card"><div class="stat-icon bg-purchase"><i class="fa fa-shopping-cart"></i></div><div class="stat-info"><h3 data-bind="text: purchaseFlow">0</h3><p>Purchase Flow</p></div></div>
+                    <div class="stat-card"><div class="stat-icon bg-completed"><i class="fa fa-flag-checkered"></i></div><div class="stat-info"><h3 data-bind="text: completed">0</h3><p>Completed</p></div></div>
+                </div>
+
+                <div class="nav-tabs-top">
+                    <ul class="nav nav-tabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-pending-review" type="button">
+                                <i class="fa fa-clock"></i> Pending Review <span class="badge bg-warning text-dark ms-1" style="font-size:0.7rem;" data-bind="text: adminStats().pendingReview">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-in-progress" type="button">
+                                <i class="fa fa-spinner"></i> In Progress <span class="badge bg-primary ms-1" style="font-size:0.7rem;" data-bind="text: adminStats().inProgress">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-purchase-flow" type="button">
+                                <i class="fa fa-shopping-cart"></i> Purchase Flow <span class="badge ms-1" style="font-size:0.7rem;background:#fd7e14;" data-bind="text: adminStats().purchaseFlow">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-completed" type="button">
+                                <i class="fa fa-flag-checkered"></i> Completed <span class="badge bg-secondary ms-1" style="font-size:0.7rem;" data-bind="text: adminStats().completed">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-all-requests" type="button"><i class="fa fa-list"></i> All Requests</button>
+                        </li>
+                    </ul>
+
+                    <div class="tab-content">
+                        <!-- TAB: Pending Review -->
+                        <div class="tab-pane fade show active" id="tab-pending-review" role="tabpanel">
+                            <div class="cardview-toolbar" id="adminPending-toolbar">
+                                <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminPending')"><i class="fa fa-sort-amount-down" id="adminPendingSortDirIcon"></i></button></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="sort-dropdown-btn" onclick="toggleDropdown('adminPendingSortMenu')"><span id="adminPendingSortLabel">Sort by Submitted date</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminPendingSortMenu">
+                                        <button class="dropdown-item active" onclick="setSort('adminPending','submitted','Submitted date')"><span class="checkmark">&#10003;</span> Submitted date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminPending','neededby','Needed by date')"><span class="checkmark">&nbsp;</span> Needed by date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminPending','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setSort('adminPending','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setSort('adminPending','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="group-dropdown-btn" onclick="toggleDropdown('adminPendingGroupMenu')"><span class="group-icon"><i class="fa fa-layer-group"></i></span> <span id="adminPendingGroupLabel">Group by</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminPendingGroupMenu">
+                                        <button class="dropdown-item active" onclick="setGroup('adminPending','none','Group by')"><span class="checkmark">&#10003;</span> None</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminPending','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminPending','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminPending','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section"><input type="text" class="toolbar-search" id="adminPendingSearchInput" placeholder="Search..." oninput="applyToolbar('adminPending')"></div>
+                                <span class="toolbar-counter" id="adminPendingCounter">Showing 0 of 0 items</span>
+                            </div>
+                            <div class="cardviews" data-bind="foreach: filteredPendingReview">
+                                <!-- ko if: $data._isGroupHeader -->
+                                <div class="group-header" data-bind="text: label"></div>
+                                <!-- /ko -->
+                                <!-- ko ifnot: $data._isGroupHeader -->
+                                <div class="cardview-item">
+                                    <div class="card-view" data-bind="style: { borderLeft: '5px solid ' + statusColor }">
+                                        <div class="card-view-contents">
+                                            <div class="cv-icon-column"><i class="fa-2x" data-bind="css: icon, style: { color: statusColor }"></i></div>
+                                            <div class="cv-content-column">
+                                                <div class="cv-row">
+                                                    <div class="cv-title-wrapper"><div class="cv-title" data-bind="html: titleHtml"></div></div>
+                                                    <div class="cv-status"><div class="cv-status-inner" data-bind="text: statusText, style: { backgroundColor: statusBgColor, border: '1px solid ' + statusColor, color: statusTextColor }"></div></div>
+                                                </div>
+                                                <div class="cv-subtitle" data-bind="html: subtitleHtml"></div>
+                                                <div class="cv-requested-for">
+                                                    <div class="cv-person-avatar" data-bind="text: employeeInitials, style: { backgroundColor: employeeAvatarColor }"></div>
+                                                    <span class="cv-person-name" data-bind="text: employeeName"></span>
+                                                    <span class="person-type-badge" data-bind="text: personType === 'consultant' ? 'CON' : 'EMP', css: personType === 'consultant' ? 'badge-consultant' : 'badge-employee'"></span>
+                                                </div>
+                                                <div class="cv-description" data-bind="text: description"></div>
+                                                <!-- ko if: remarks -->
+                                                <div class="cv-subdescription" data-bind="html: remarks, style: { fontSize: '0.8rem', color: remarksTextColor, background: remarksBgColor, border: '1px solid ' + remarksBorderColor, borderRadius: '4px', padding: '0.4rem 0.6rem', marginBottom: '4px' }"></div>
+                                                <!-- /ko -->
+                                                <div class="cv-actions">
+                                                    <div class="cardview-action-primary" data-bind="template: { name: 'action-buttons-tpl', data: $data }"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- /ko -->
+                            </div>
+                        </div>
+
+                        <!-- TAB: In Progress -->
+                        <div class="tab-pane fade" id="tab-in-progress" role="tabpanel">
+                            <div class="cardview-toolbar" id="adminInProgress-toolbar">
+                                <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminInProgress')"><i class="fa fa-sort-amount-down" id="adminInProgressSortDirIcon"></i></button></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="sort-dropdown-btn" onclick="toggleDropdown('adminInProgressSortMenu')"><span id="adminInProgressSortLabel">Sort by Submitted date</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminInProgressSortMenu">
+                                        <button class="dropdown-item active" onclick="setSort('adminInProgress','submitted','Submitted date')"><span class="checkmark">&#10003;</span> Submitted date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminInProgress','neededby','Needed by date')"><span class="checkmark">&nbsp;</span> Needed by date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminInProgress','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setSort('adminInProgress','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setSort('adminInProgress','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="group-dropdown-btn" onclick="toggleDropdown('adminInProgressGroupMenu')"><span class="group-icon"><i class="fa fa-layer-group"></i></span> <span id="adminInProgressGroupLabel">Group by</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminInProgressGroupMenu">
+                                        <button class="dropdown-item active" onclick="setGroup('adminInProgress','none','Group by')"><span class="checkmark">&#10003;</span> None</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminInProgress','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminInProgress','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminInProgress','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section"><input type="text" class="toolbar-search" id="adminInProgressSearchInput" placeholder="Search..." oninput="applyToolbar('adminInProgress')"></div>
+                                <span class="toolbar-counter" id="adminInProgressCounter">Showing 0 of 0 items</span>
+                            </div>
+                            <div class="cardviews" data-bind="foreach: filteredInProgress">
+                                <!-- ko if: $data._isGroupHeader -->
+                                <div class="group-header" data-bind="text: label"></div>
+                                <!-- /ko -->
+                                <!-- ko ifnot: $data._isGroupHeader -->
+                                <div class="cardview-item">
+                                    <div class="card-view" data-bind="style: { borderLeft: '5px solid ' + statusColor }">
+                                        <div class="card-view-contents">
+                                            <div class="cv-icon-column"><i class="fa-2x" data-bind="css: icon, style: { color: statusColor }"></i></div>
+                                            <div class="cv-content-column">
+                                                <div class="cv-row">
+                                                    <div class="cv-title-wrapper"><div class="cv-title" data-bind="html: titleHtml"></div></div>
+                                                    <div class="cv-status"><div class="cv-status-inner" data-bind="text: statusText, style: { backgroundColor: statusBgColor, border: '1px solid ' + statusColor, color: statusTextColor }"></div></div>
+                                                </div>
+                                                <div class="cv-subtitle" data-bind="html: subtitleHtml"></div>
+                                                <div class="cv-requested-for">
+                                                    <div class="cv-person-avatar" data-bind="text: employeeInitials, style: { backgroundColor: employeeAvatarColor }"></div>
+                                                    <span class="cv-person-name" data-bind="text: employeeName"></span>
+                                                    <span class="person-type-badge" data-bind="text: personType === 'consultant' ? 'CON' : 'EMP', css: personType === 'consultant' ? 'badge-consultant' : 'badge-employee'"></span>
+                                                </div>
+                                                <div class="cv-description" data-bind="text: description"></div>
+                                                <!-- ko if: remarks -->
+                                                <div class="cv-subdescription" data-bind="html: remarks, style: { fontSize: '0.8rem', color: remarksTextColor, background: remarksBgColor, border: '1px solid ' + remarksBorderColor, borderRadius: '4px', padding: '0.4rem 0.6rem', marginBottom: '4px' }"></div>
+                                                <!-- /ko -->
+                                                <div class="cv-actions">
+                                                    <div class="cardview-action-primary" data-bind="template: { name: 'action-buttons-tpl', data: $data }"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- /ko -->
+                            </div>
+                        </div>
+
+                        <!-- TAB: Purchase Flow -->
+                        <div class="tab-pane fade" id="tab-purchase-flow" role="tabpanel">
+                            <div class="cardview-toolbar" id="adminPurchase-toolbar">
+                                <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminPurchase')"><i class="fa fa-sort-amount-down" id="adminPurchaseSortDirIcon"></i></button></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="sort-dropdown-btn" onclick="toggleDropdown('adminPurchaseSortMenu')"><span id="adminPurchaseSortLabel">Sort by Submitted date</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminPurchaseSortMenu">
+                                        <button class="dropdown-item active" onclick="setSort('adminPurchase','submitted','Submitted date')"><span class="checkmark">&#10003;</span> Submitted date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminPurchase','neededby','Needed by date')"><span class="checkmark">&nbsp;</span> Needed by date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminPurchase','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setSort('adminPurchase','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setSort('adminPurchase','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="group-dropdown-btn" onclick="toggleDropdown('adminPurchaseGroupMenu')"><span class="group-icon"><i class="fa fa-layer-group"></i></span> <span id="adminPurchaseGroupLabel">Group by</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminPurchaseGroupMenu">
+                                        <button class="dropdown-item active" onclick="setGroup('adminPurchase','none','Group by')"><span class="checkmark">&#10003;</span> None</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminPurchase','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminPurchase','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminPurchase','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section"><input type="text" class="toolbar-search" id="adminPurchaseSearchInput" placeholder="Search..." oninput="applyToolbar('adminPurchase')"></div>
+                                <span class="toolbar-counter" id="adminPurchaseCounter">Showing 0 of 0 items</span>
+                            </div>
+                            <div class="cardviews" data-bind="foreach: filteredPurchaseFlow">
+                                <!-- ko if: $data._isGroupHeader -->
+                                <div class="group-header" data-bind="text: label"></div>
+                                <!-- /ko -->
+                                <!-- ko ifnot: $data._isGroupHeader -->
+                                <div class="cardview-item">
+                                    <div class="card-view" data-bind="style: { borderLeft: '5px solid ' + statusColor }">
+                                        <div class="card-view-contents">
+                                            <div class="cv-icon-column"><i class="fa-2x" data-bind="css: icon, style: { color: statusColor }"></i></div>
+                                            <div class="cv-content-column">
+                                                <div class="cv-row">
+                                                    <div class="cv-title-wrapper"><div class="cv-title" data-bind="html: titleHtml"></div></div>
+                                                    <div class="cv-status"><div class="cv-status-inner" data-bind="text: statusText, style: { backgroundColor: statusBgColor, border: '1px solid ' + statusColor, color: statusTextColor }"></div></div>
+                                                </div>
+                                                <div class="cv-subtitle" data-bind="html: subtitleHtml"></div>
+                                                <div class="cv-requested-for">
+                                                    <div class="cv-person-avatar" data-bind="text: employeeInitials, style: { backgroundColor: employeeAvatarColor }"></div>
+                                                    <span class="cv-person-name" data-bind="text: employeeName"></span>
+                                                    <span class="person-type-badge" data-bind="text: personType === 'consultant' ? 'CON' : 'EMP', css: personType === 'consultant' ? 'badge-consultant' : 'badge-employee'"></span>
+                                                </div>
+                                                <div class="cv-description" data-bind="text: description"></div>
+                                                <!-- ko if: remarks -->
+                                                <div class="cv-subdescription" data-bind="html: remarks, style: { fontSize: '0.8rem', color: remarksTextColor, background: remarksBgColor, border: '1px solid ' + remarksBorderColor, borderRadius: '4px', padding: '0.4rem 0.6rem', marginBottom: '4px' }"></div>
+                                                <!-- /ko -->
+                                                <div class="cv-actions">
+                                                    <div class="cardview-action-primary" data-bind="template: { name: 'action-buttons-tpl', data: $data }"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- /ko -->
+                            </div>
+                        </div>
+
+                        <!-- TAB: Completed -->
+                        <div class="tab-pane fade" id="tab-completed" role="tabpanel">
+                            <div class="cardview-toolbar" id="adminCompleted-toolbar">
+                                <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminCompleted')"><i class="fa fa-sort-amount-down" id="adminCompletedSortDirIcon"></i></button></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="sort-dropdown-btn" onclick="toggleDropdown('adminCompletedSortMenu')"><span id="adminCompletedSortLabel">Sort by Submitted date</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminCompletedSortMenu">
+                                        <button class="dropdown-item active" onclick="setSort('adminCompleted','submitted','Submitted date')"><span class="checkmark">&#10003;</span> Submitted date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminCompleted','neededby','Needed by date')"><span class="checkmark">&nbsp;</span> Needed by date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminCompleted','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setSort('adminCompleted','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setSort('adminCompleted','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="group-dropdown-btn" onclick="toggleDropdown('adminCompletedGroupMenu')"><span class="group-icon"><i class="fa fa-layer-group"></i></span> <span id="adminCompletedGroupLabel">Group by</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminCompletedGroupMenu">
+                                        <button class="dropdown-item active" onclick="setGroup('adminCompleted','none','Group by')"><span class="checkmark">&#10003;</span> None</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminCompleted','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminCompleted','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminCompleted','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section"><input type="text" class="toolbar-search" id="adminCompletedSearchInput" placeholder="Search..." oninput="applyToolbar('adminCompleted')"></div>
+                                <span class="toolbar-counter" id="adminCompletedCounter">Showing 0 of 0 items</span>
+                            </div>
+                            <div class="cardviews" data-bind="foreach: filteredCompleted">
+                                <!-- ko if: $data._isGroupHeader -->
+                                <div class="group-header" data-bind="text: label"></div>
+                                <!-- /ko -->
+                                <!-- ko ifnot: $data._isGroupHeader -->
+                                <div class="cardview-item">
+                                    <div class="card-view" data-bind="style: { borderLeft: '5px solid ' + statusColor }">
+                                        <div class="card-view-contents">
+                                            <div class="cv-icon-column"><i class="fa-2x" data-bind="css: icon, style: { color: statusColor }"></i></div>
+                                            <div class="cv-content-column">
+                                                <div class="cv-row">
+                                                    <div class="cv-title-wrapper"><div class="cv-title" data-bind="html: titleHtml"></div></div>
+                                                    <div class="cv-status"><div class="cv-status-inner" data-bind="text: statusText, style: { backgroundColor: statusBgColor, border: '1px solid ' + statusColor, color: statusTextColor }"></div></div>
+                                                </div>
+                                                <div class="cv-subtitle" data-bind="html: subtitleHtml"></div>
+                                                <div class="cv-requested-for">
+                                                    <div class="cv-person-avatar" data-bind="text: employeeInitials, style: { backgroundColor: employeeAvatarColor }"></div>
+                                                    <span class="cv-person-name" data-bind="text: employeeName"></span>
+                                                    <span class="person-type-badge" data-bind="text: personType === 'consultant' ? 'CON' : 'EMP', css: personType === 'consultant' ? 'badge-consultant' : 'badge-employee'"></span>
+                                                </div>
+                                                <div class="cv-description" data-bind="text: description"></div>
+                                                <!-- ko if: remarks -->
+                                                <div class="cv-subdescription" data-bind="html: remarks, style: { fontSize: '0.8rem', color: remarksTextColor, background: remarksBgColor, border: '1px solid ' + remarksBorderColor, borderRadius: '4px', padding: '0.4rem 0.6rem', marginBottom: '4px' }"></div>
+                                                <!-- /ko -->
+                                                <div class="cv-actions">
+                                                    <div class="cardview-action-primary">
+                                                        <a href="#" class="btn btn-sm btn-outline-primary border-0 cv-action-btn" data-bind="click: function() { $root.viewRequest($data); }" title="View"><i class="fa fa-eye"></i> View</a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- /ko -->
+                            </div>
+                        </div>
+
+                        <!-- TAB: All Requests -->
+                        <div class="tab-pane fade" id="tab-all-requests" role="tabpanel">
+                            <div class="cardview-toolbar" id="adminAll-toolbar">
+                                <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminAll')"><i class="fa fa-sort-amount-down" id="adminAllSortDirIcon"></i></button></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="sort-dropdown-btn" onclick="toggleDropdown('adminAllSortMenu')"><span id="adminAllSortLabel">Sort by Submitted date</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminAllSortMenu">
+                                        <button class="dropdown-item active" onclick="setSort('adminAll','submitted','Submitted date')"><span class="checkmark">&#10003;</span> Submitted date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminAll','neededby','Needed by date')"><span class="checkmark">&nbsp;</span> Needed by date</button>
+                                        <button class="dropdown-item" onclick="setSort('adminAll','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setSort('adminAll','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setSort('adminAll','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section" style="position:relative;">
+                                    <button class="group-dropdown-btn" onclick="toggleDropdown('adminAllGroupMenu')"><span class="group-icon"><i class="fa fa-layer-group"></i></span> <span id="adminAllGroupLabel">Group by</span> <i class="fa fa-caret-down" style="font-size:0.75rem;"></i></button>
+                                    <div class="toolbar-dropdown-menu" id="adminAllGroupMenu">
+                                        <button class="dropdown-item active" onclick="setGroup('adminAll','none','Group by')"><span class="checkmark">&#10003;</span> None</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminAll','status','Status')"><span class="checkmark">&nbsp;</span> Status</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminAll','category','Category')"><span class="checkmark">&nbsp;</span> Category</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminAll','priority','Priority')"><span class="checkmark">&nbsp;</span> Priority</button>
+                                        <button class="dropdown-item" onclick="setGroup('adminAll','employee','Employee')"><span class="checkmark">&nbsp;</span> Employee</button>
+                                    </div>
+                                </div>
+                                <div class="toolbar-separator"></div>
+                                <div class="toolbar-section"><input type="text" class="toolbar-search" id="adminAllSearchInput" placeholder="Search..." oninput="applyToolbar('adminAll')"></div>
+                                <span class="toolbar-counter" id="adminAllCounter">Showing 0 of 0 items</span>
+                            </div>
+                            <div class="cardviews" data-bind="foreach: filteredAllRequests">
+                                <!-- ko if: $data._isGroupHeader -->
+                                <div class="group-header" data-bind="text: label"></div>
+                                <!-- /ko -->
+                                <!-- ko ifnot: $data._isGroupHeader -->
+                                <div class="cardview-item">
+                                    <div class="card-view" data-bind="style: { borderLeft: '5px solid ' + statusColor }">
+                                        <div class="card-view-contents">
+                                            <div class="cv-icon-column"><i class="fa-2x" data-bind="css: icon, style: { color: statusColor }"></i></div>
+                                            <div class="cv-content-column">
+                                                <div class="cv-row">
+                                                    <div class="cv-title-wrapper"><div class="cv-title" data-bind="html: titleHtml"></div></div>
+                                                    <div class="cv-status"><div class="cv-status-inner" data-bind="text: statusText, style: { backgroundColor: statusBgColor, border: '1px solid ' + statusColor, color: statusTextColor }"></div></div>
+                                                </div>
+                                                <div class="cv-subtitle" data-bind="html: subtitleHtml"></div>
+                                                <div class="cv-requested-for">
+                                                    <div class="cv-person-avatar" data-bind="text: employeeInitials, style: { backgroundColor: employeeAvatarColor }"></div>
+                                                    <span class="cv-person-name" data-bind="text: employeeName"></span>
+                                                    <span class="person-type-badge" data-bind="text: personType === 'consultant' ? 'CON' : 'EMP', css: personType === 'consultant' ? 'badge-consultant' : 'badge-employee'"></span>
+                                                </div>
+                                                <div class="cv-description" data-bind="text: description"></div>
+                                                <!-- ko if: remarks -->
+                                                <div class="cv-subdescription" data-bind="html: remarks, style: { fontSize: '0.8rem', color: remarksTextColor, background: remarksBgColor, border: '1px solid ' + remarksBorderColor, borderRadius: '4px', padding: '0.4rem 0.6rem', marginBottom: '4px' }"></div>
+                                                <!-- /ko -->
+                                                <div class="cv-actions">
+                                                    <div class="cardview-action-primary" data-bind="template: { name: 'action-buttons-tpl', data: $data }"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- /ko -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ===== ROLE-BASED ACTION BUTTONS TEMPLATE ===== -->
+<script type="text/html" id="action-buttons-tpl">
+    <a href="#" class="btn btn-sm btn-outline-primary border-0 cv-action-btn" data-bind="click: function() { $root.viewRequest($data); }" title="View"><i class="fa fa-eye"></i> View</a>
+
+    <!-- Marketing Officer: Approve/Reject on REQUESTED -->
+    <!-- ko if: status === 'requested' && $root.currentRole() === 'marketing_officer' -->
+    <button type="button" class="btn btn-sm btn-success cv-action-btn" data-bind="click: function() { $root.openApproveModal($data); }"><i class="fa fa-check"></i> Approve</button>
+    <button type="button" class="btn btn-sm btn-danger cv-action-btn" data-bind="click: function() { $root.openRejectModal($data); }"><i class="fa fa-times"></i> Reject</button>
+    <!-- /ko -->
+
+    <!-- Inventory Clerk: Search actions on SEARCHING_INVENTORY -->
+    <!-- ko if: status === 'searching_inventory' && $root.currentRole() === 'inventory_clerk' -->
+    <button type="button" class="btn btn-sm btn-success cv-action-btn" data-bind="click: function() { $root.matchFound($data); }"><i class="fa fa-check-circle"></i> Match Found</button>
+    <button type="button" class="btn btn-sm cv-action-btn" style="color:#6f42c1;border-color:#6f42c1;" data-bind="click: function() { $root.openSuggestModal($data); }"><i class="fa fa-exchange-alt"></i> No Match / Suggest</button>
+    <!-- /ko -->
+
+    <!-- Inventory Clerk: Create Purchase Request on ALTERNATIVE_REJECTED -->
+    <!-- ko if: status === 'alternative_rejected' && $root.currentRole() === 'inventory_clerk' -->
+    <button type="button" class="btn btn-sm btn-warning cv-action-btn" data-bind="click: function() { $root.openPurchaseRequestModal($data); }"><i class="fa fa-shopping-cart"></i> Create Purchase Request</button>
+    <!-- /ko -->
+
+    <!-- Inventory Clerk: Reserve on MATCH_FOUND or ALTERNATIVE_ACCEPTED or RECEIVED_BY_FINANCE -->
+    <!-- ko if: (status === 'match_found' || status === 'alternative_accepted' || status === 'received_by_finance') && $root.currentRole() === 'inventory_clerk' -->
+    <button type="button" class="btn btn-sm cv-action-btn" style="color:#6610f2;border-color:#6610f2;" data-bind="click: function() { $root.reserveAsset($data); }"><i class="fa fa-lock"></i> Reserve</button>
+    <!-- /ko -->
+
+    <!-- Inventory Clerk: Start Setup on RESERVED -->
+    <!-- ko if: status === 'reserved' && $root.currentRole() === 'inventory_clerk' -->
+    <button type="button" class="btn btn-sm cv-action-btn" style="color:#e83e8c;border-color:#e83e8c;" data-bind="click: function() { $root.openSetupModal($data); }"><i class="fa fa-cog"></i> Start Setup</button>
+    <!-- /ko -->
+
+    <!-- Inventory Clerk: Complete Setup on SETTING_UP -->
+    <!-- ko if: status === 'setting_up' && $root.currentRole() === 'inventory_clerk' -->
+    <button type="button" class="btn btn-sm btn-success cv-action-btn" data-bind="click: function() { $root.completeSetup($data); }"><i class="fa fa-check"></i> Complete Setup</button>
+    <!-- /ko -->
+
+    <!-- Inventory Clerk: Transfer on READY_FOR_TRANSFER -->
+    <!-- ko if: status === 'ready_for_transfer' && $root.currentRole() === 'inventory_clerk' -->
+    <button type="button" class="btn btn-sm btn-primary cv-action-btn" data-bind="click: function() { $root.openTransferModal($data); }"><i class="fa fa-truck"></i> Transfer</button>
+    <!-- /ko -->
+
+    <!-- Finance Manager: Approve/Reject Purchase on PENDING_PURCHASE_APPROVAL -->
+    <!-- ko if: status === 'pending_purchase_approval' && $root.currentRole() === 'finance_manager' -->
+    <button type="button" class="btn btn-sm btn-success cv-action-btn" data-bind="click: function() { $root.openApprovePurchaseModal($data); }"><i class="fa fa-check"></i> Approve Purchase</button>
+    <button type="button" class="btn btn-sm btn-danger cv-action-btn" data-bind="click: function() { $root.openRejectPurchaseModal($data); }"><i class="fa fa-times"></i> Reject Purchase</button>
+    <!-- /ko -->
+
+    <!-- Finance Manager: Order from Vendor on PURCHASE_APPROVED -->
+    <!-- ko if: status === 'purchase_approved' && $root.currentRole() === 'finance_manager' -->
+    <button type="button" class="btn btn-sm btn-primary cv-action-btn" data-bind="click: function() { $root.openOrderModal($data); }"><i class="fa fa-shopping-bag"></i> Order from Vendor</button>
+    <!-- /ko -->
+
+    <!-- Finance Manager: Mark Received on PENDING_RECEIPT -->
+    <!-- ko if: status === 'pending_receipt' && $root.currentRole() === 'finance_manager' -->
+    <button type="button" class="btn btn-sm btn-success cv-action-btn" data-bind="click: function() { $root.openReceiveModal($data); }"><i class="fa fa-box-open"></i> Mark Received</button>
+    <!-- /ko -->
+
+    <!-- Marketing Assistant: Deliver / Failed on IN_TRANSIT_TO_RECIPIENT -->
+    <!-- ko if: status === 'in_transit_to_recipient' && $root.currentRole() === 'marketing_assistant' -->
+    <button type="button" class="btn btn-sm btn-success cv-action-btn" data-bind="click: function() { $root.openDeliverModal($data); }"><i class="fa fa-check-circle"></i> Deliver</button>
+    <button type="button" class="btn btn-sm btn-danger cv-action-btn" data-bind="click: function() { $root.openFailedDeliveryModal($data); }"><i class="fa fa-exclamation-triangle"></i> Failed</button>
+    <!-- /ko -->
+
+    <!-- Marketing Assistant: Forward to Client on NO_MATCH_ALTERNATIVE_PROPOSED -->
+    <!-- ko if: status === 'no_match_alternative_proposed' && $root.currentRole() === 'marketing_assistant' -->
+    <button type="button" class="btn btn-sm cv-action-btn" style="color:#6f42c1;border-color:#6f42c1;" data-bind="click: function() { $root.forwardToClient($data); }"><i class="fa fa-share"></i> Forward to Client</button>
+    <!-- /ko -->
+
+    <!-- Marketing Assistant: Accept/Decline Alternative on ALTERNATIVE_PENDING_CLIENT (records verbal client decision) -->
+    <!-- ko if: status === 'alternative_pending_client' && $root.currentRole() === 'marketing_assistant' -->
+    <button type="button" class="btn btn-sm cv-action-btn" style="color:#28a745;border-color:#28a745;" data-bind="click: function() { $root.acceptAlternative($data); }"><i class="fa fa-check"></i> Accept</button>
+    <button type="button" class="btn btn-sm cv-action-btn" style="color:#dc3545;border-color:#dc3545;" data-bind="click: function() { $root.declineAlternative($data); }"><i class="fa fa-times"></i> Decline</button>
+    <!-- /ko -->
+</script>
+
+<!-- ============================================================ -->
+<!-- MODAL: Create New Request                                   -->
+<!-- ============================================================ -->
+<div class="modal fade" id="createRequestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa fa-plus-circle" style="color: var(--primary); margin-right: 0.4rem;"></i> Submit New Asset Request</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createRequestForm">
+                    <div class="mb-3">
+                        <label class="form-label">Request For <span class="text-danger">*</span></label>
+                        <div class="row g-2 align-items-start">
+                            <div class="col-md-4">
+                                <div class="person-type-selector" id="personTypeSelector">
+                                    <button type="button" class="type-option type-employee active" onclick="setPersonType('employee')"><i class="fa fa-user"></i> Employee</button>
+                                    <button type="button" class="type-option type-consultant" onclick="setPersonType('consultant')"><i class="fa fa-briefcase"></i> Consultant</button>
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <select class="form-select" id="personSelect" style="width:100%;"><option value="">-- Select a person --</option></select>
+                                <span class="text-danger validation-error" id="personError" style="font-size:0.8rem;display:none;">Please select a person.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="person-metadata-panel" id="personMetadataPanel">
+                        <div class="person-header">
+                            <div class="person-avatar" id="metaAvatar" style="background:var(--primary);">JD</div>
+                            <div>
+                                <div class="person-name" id="metaName">Juan Dela Cruz <span class="person-type-badge badge-employee" id="metaTypeBadge">EMP</span></div>
+                                <div class="person-id" id="metaId">EMP-2024-0012</div>
+                            </div>
+                        </div>
+                        <div class="meta-grid">
+                            <div class="meta-item"><span class="meta-label">Department</span><span class="meta-value" id="metaDept">Software Development</span></div>
+                            <div class="meta-item"><span class="meta-label">Job Title</span><span class="meta-value" id="metaJobTitle">Senior Developer</span></div>
+                            <div class="meta-item"><span class="meta-label">Email</span><span class="meta-value" id="metaEmail">juan.delacruz@company.com</span></div>
+                            <div class="meta-item"><span class="meta-label">Phone</span><span class="meta-value" id="metaPhone">+63 917 123 4567</span></div>
+                            <div class="meta-item"><span class="meta-label">Office</span><span class="meta-value" id="metaOffice">Manila HQ - 12F</span></div>
+                            <div class="meta-item"><span class="meta-label">Manager</span><span class="meta-value" id="metaManager">Pedro Reyes</span></div>
+                        </div>
+                    </div>
+                    <hr style="margin: 1rem 0;">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Requested Asset Type <span class="text-danger">*</span></label>
+                                <select class="form-select select2" id="requestCategoryId" required>
+                                    <option value="">-- Select Category --</option>
+                                    <option value="Laptop">Laptop</option><option value="Desktop">Desktop</option>
+                                    <option value="Monitor">Monitor</option><option value="Keyboard">Keyboard</option>
+                                    <option value="Mouse">Mouse</option><option value="Memory (RAM)">Memory (RAM)</option>
+                                    <option value="Storage (SSD/HDD)">Storage (SSD/HDD)</option><option value="Printer">Printer</option>
+                                    <option value="Headset">Headset</option><option value="Webcam">Webcam</option>
+                                    <option value="Docking Station">Docking Station</option><option value="Other">Other</option>
+                                </select>
+                                <span class="text-danger validation-error" id="categoryError" style="font-size:0.8rem;display:none;">Please select an asset type.</span>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Priority <span class="text-danger">*</span></label>
+                                <select class="form-select" id="requestPriority" required>
+                                    <option value="">-- Select Priority --</option>
+                                    <option value="Low">Low - Nice to have</option>
+                                    <option value="Medium" selected>Medium - Needed for productivity</option>
+                                    <option value="High">High - Significantly impacts work</option>
+                                    <option value="Critical">Critical - Cannot work without it</option>
+                                </select>
+                                <span class="text-danger validation-error" id="priorityError" style="font-size:0.8rem;display:none;">Please select a priority.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group mb-3">
+                                <label class="form-label">Needed By Date <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" id="requestNeededByDate" required>
+                                <span class="text-danger validation-error" id="dateError" style="font-size:0.8rem;display:none;">Please select a date.</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Justification <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="requestJustification" rows="4" required placeholder="Please explain why you need this asset."></textarea>
+                        <span class="text-danger validation-error" id="justificationError" style="font-size:0.8rem;display:none;">Please provide a justification (minimum 20 characters).</span>
+                        <div class="d-flex justify-content-between mt-1">
+                            <small class="text-muted">Minimum 20 characters required.</small>
+                            <small class="text-muted"><span id="charCount">0</span> / 2000</small>
+                        </div>
+                    </div>
+                    <div class="form-group mb-3">
+                        <label class="form-label">Additional Notes <small class="text-muted">(Optional)</small></label>
+                        <textarea class="form-control" id="requestNotes" rows="2" placeholder="Any specific brand preference, model, specifications..."></textarea>
+                    </div>
+                    <div class="alert alert-info" style="font-size: 0.82rem; border-radius: 8px;">
+                        <i class="fa fa-info-circle" style="margin-right: 0.3rem;"></i>
+                        <strong>Note:</strong> Your request will be reviewed by the Marketing Officer. You will be notified when the status changes.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa fa-times"></i> Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="submitRequest()"><i class="fa fa-paper-plane"></i> Submit Request</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: View Request Detail -->
+<div class="modal fade" id="viewRequestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="fa fa-file-alt" style="color: var(--primary); margin-right: 0.4rem;"></i> Request Details &mdash; <span data-bind="text: selectedRequest() ? '#' + selectedRequest().requestId : ''"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" data-bind="with: selectedRequest">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="detail-row"><span class="detail-label">Request #</span><span class="detail-value"><strong data-bind="text: '#' + requestId"></strong></span></div>
+                        <div class="detail-row"><span class="detail-label">Asset Type</span><span class="detail-value" data-bind="html: '<i class=\'fa ' + icon + '\' style=\'color:var(--primary)\'></i> ' + category"></span></div>
+                        <div class="detail-row"><span class="detail-label">Priority</span><span class="detail-value" data-bind="html: priorityHtml"></span></div>
+                        <div class="detail-row"><span class="detail-label">Status</span><span class="detail-value"><span class="cv-status-inner" data-bind="text: statusText, style: { backgroundColor: statusBgColor, border: '1px solid ' + statusColor, color: statusTextColor, padding: '2px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: '600' }"></span></span></div>
+                        <div class="detail-row"><span class="detail-label">Needed By</span><span class="detail-value" data-bind="text: neededByFormatted"></span></div>
+                        <div class="detail-row"><span class="detail-label">Submitted</span><span class="detail-value" data-bind="text: submittedFormatted"></span></div>
+                        <div class="detail-row"><span class="detail-label">Requested For</span><span class="detail-value" data-bind="text: employeeName"></span></div>
+                        <div class="detail-row"><span class="detail-label">Justification</span><span class="detail-value" data-bind="text: description"></span></div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="card" style="background: #f8f9fa;">
+                            <div class="card-body" style="padding: 1rem;">
+                                <h6 style="font-size:0.82rem;font-weight:600;color:#666;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.75rem;"><i class="fa fa-clock"></i> Request Timeline</h6>
+                                <div class="request-timeline">
+                                    <div class="timeline-item active"><div class="timeline-text"><strong>Request Submitted</strong></div><div class="timeline-date" data-bind="text: submittedFormatted"></div></div>
+                                    <div class="timeline-item"><div class="timeline-text" data-bind="text: statusText, style: { color: statusColor, fontWeight: '600' }"></div><div class="timeline-date">Current status</div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fa fa-times"></i> Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Approve (Marketing Officer) -->
+<div class="modal fade" id="approveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #d4edda;"><h5 class="modal-title" style="color: #155724;"><i class="fa fa-check-circle" style="margin-right: 0.4rem;"></i> Approve Request</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="approveModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">Remarks <small class="text-muted">(Optional)</small></label><textarea class="form-control" id="approveRemarks" rows="3" placeholder="Add notes about the approval..."></textarea></div>
+                <div class="alert alert-success" style="font-size:0.82rem;border-radius:8px;"><i class="fa fa-info-circle" style="margin-right:0.3rem;"></i> <strong>Note:</strong> Approving will route the request to the Inventory Clerk for inventory search.</div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-success" onclick="approveRequest()"><i class="fa fa-check"></i> Confirm Approval</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Reject (Marketing Officer) -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #f8d7da;"><h5 class="modal-title" style="color: #721c24;"><i class="fa fa-times-circle" style="margin-right: 0.4rem;"></i> Reject Request</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="rejectModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">Rejection Reason <span class="text-danger">*</span></label><textarea class="form-control" id="rejectRemarks" rows="3" required placeholder="Please provide a clear reason for rejecting this request."></textarea><span class="text-danger" id="rejectRemarksError" style="font-size:0.8rem;display:none;">Rejection reason is required.</span></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" onclick="rejectRequest()"><i class="fa fa-times"></i> Confirm Rejection</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Suggest Alternative (Inventory Clerk) -->
+<div class="modal fade" id="suggestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #e8dff5;"><h5 class="modal-title" style="color: #4a2d85;"><i class="fa fa-exchange-alt" style="margin-right: 0.4rem;"></i> Suggest Alternative</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="suggestModalInfo"></div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Suggested Asset Type <span class="text-danger">*</span></label>
+                    <select class="form-select" id="suggestCategory">
+                        <option value="">-- Select Alternative --</option>
+                        <option value="Laptop">Laptop</option><option value="Desktop">Desktop</option>
+                        <option value="Monitor">Monitor</option><option value="Keyboard">Keyboard</option>
+                        <option value="Mouse">Mouse</option><option value="Memory (RAM)">Memory (RAM)</option>
+                        <option value="Storage (SSD/HDD)">Storage (SSD/HDD)</option><option value="Printer">Printer</option>
+                        <option value="Headset">Headset</option><option value="Webcam">Webcam</option>
+                        <option value="Docking Station">Docking Station</option><option value="Other">Other</option>
+                    </select>
+                    <span class="text-danger" id="suggestCategoryError" style="font-size:0.8rem;display:none;">Please select an alternative asset type.</span>
+                </div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Reason / Explanation <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="suggestRemarks" rows="3" required placeholder="Explain why you are suggesting this alternative..."></textarea>
+                    <span class="text-danger" id="suggestRemarksError" style="font-size:0.8rem;display:none;">Reason is required.</span>
+                </div>
+                <div class="alert" style="font-size:0.82rem;border-radius:8px;background:#e8dff5;border:1px solid #c4a8e8;color:#4a2d85;"><i class="fa fa-info-circle" style="margin-right:0.3rem;"></i> <strong>Note:</strong> The Marketing Assistant will verbally confirm this suggestion with the client and record their decision.</div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn" style="background:#6f42c1;color:#fff;" onclick="suggestAlternative()"><i class="fa fa-exchange-alt"></i> Send Suggestion</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Purchase Request (Inventory Clerk) -->
+<div class="modal fade" id="purchaseRequestModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #ffe8cc;"><h5 class="modal-title" style="color: #854d0e;"><i class="fa fa-shopping-cart" style="margin-right: 0.4rem;"></i> Create Purchase Request</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="purchaseReqModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">Vendor <small class="text-muted">(Optional)</small></label><input type="text" class="form-control" id="purchaseVendor" placeholder="e.g., Dell, Lenovo, HP..."></div>
+                <div class="form-group mb-3"><label class="form-label">Estimated Cost <small class="text-muted">(Optional)</small></label><input type="text" class="form-control" id="purchaseCost" placeholder="e.g., PHP 45,000"></div>
+                <div class="form-group mb-3"><label class="form-label">Justification <span class="text-danger">*</span></label><textarea class="form-control" id="purchaseJustification" rows="3" required placeholder="Explain the purchase need..."></textarea><span class="text-danger" id="purchaseJustError" style="font-size:0.8rem;display:none;">Justification is required.</span></div>
+                <div class="alert alert-warning" style="font-size:0.82rem;border-radius:8px;"><i class="fa fa-info-circle" style="margin-right:0.3rem;"></i> <strong>Note:</strong> This will route to the Finance Manager for purchase approval.</div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-warning" onclick="createPurchaseRequest()"><i class="fa fa-shopping-cart"></i> Submit Purchase Request</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Approve Purchase (Finance Manager) -->
+<div class="modal fade" id="approvePurchaseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #d4edda;"><h5 class="modal-title" style="color: #155724;"><i class="fa fa-check-circle" style="margin-right: 0.4rem;"></i> Approve Purchase</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="approvePurchaseModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">Remarks <small class="text-muted">(Optional)</small></label><textarea class="form-control" id="approvePurchaseRemarks" rows="3" placeholder="Notes about the purchase approval..."></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-success" onclick="approvePurchase()"><i class="fa fa-check"></i> Approve Purchase</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Reject Purchase (Finance Manager) -->
+<div class="modal fade" id="rejectPurchaseModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #f8d7da;"><h5 class="modal-title" style="color: #721c24;"><i class="fa fa-times-circle" style="margin-right: 0.4rem;"></i> Reject Purchase Request</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="rejectPurchaseModalInfo"></div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Rejection Reason <span class="text-danger">*</span></label>
+                    <select class="form-select mb-2" id="purchaseRejectReason">
+                        <option value="">-- Select Reason --</option>
+                        <option value="Budget constraints">Budget constraints</option>
+                        <option value="Vendor unavailable">Vendor unavailable</option>
+                        <option value="Cost exceeds approval threshold">Cost exceeds approval threshold</option>
+                        <option value="Other">Other</option>
+                    </select>
+                    <textarea class="form-control" id="purchaseRejectRemarks" rows="3" required placeholder="Provide additional explanation..."></textarea>
+                    <span class="text-danger" id="purchaseRejectError" style="font-size:0.8rem;display:none;">Please select a reason and provide remarks.</span>
+                </div>
+                <div class="alert alert-danger" style="font-size:0.82rem;border-radius:8px;"><i class="fa fa-exclamation-triangle" style="margin-right:0.3rem;"></i> <strong>Warning:</strong> This is a terminal action. The purchase request cannot be reopened after rejection.</div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" onclick="rejectPurchase()"><i class="fa fa-times"></i> Reject Purchase</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Order from Vendor (Finance Manager) -->
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #cce5ff;"><h5 class="modal-title" style="color: #004085;"><i class="fa fa-shopping-bag" style="margin-right: 0.4rem;"></i> Order from Vendor</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="orderModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">PO Number <small class="text-muted">(Optional)</small></label><input type="text" class="form-control" id="orderPO" placeholder="e.g., PO-2025-0123"></div>
+                <div class="form-group mb-3"><label class="form-label">Vendor Name <small class="text-muted">(Optional)</small></label><input type="text" class="form-control" id="orderVendorName" placeholder="e.g., Dell Philippines"></div>
+                <div class="form-group mb-3"><label class="form-label">Estimated Delivery <small class="text-muted">(Optional)</small></label><input type="text" class="form-control" id="orderDeliveryEst" placeholder="e.g., 2-3 weeks"></div>
+                <div class="form-group mb-3"><label class="form-label">Remarks <small class="text-muted">(Optional)</small></label><textarea class="form-control" id="orderRemarks" rows="2" placeholder="Order details..."></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" onclick="orderFromVendor()"><i class="fa fa-shopping-bag"></i> Confirm Order</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Mark Received (Finance Manager) -->
+<div class="modal fade" id="receiveModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #cce5ff;"><h5 class="modal-title" style="color: #004085;"><i class="fa fa-box-open" style="margin-right: 0.4rem;"></i> Mark Asset Received</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="receiveModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">Condition Notes <small class="text-muted">(Optional)</small></label><textarea class="form-control" id="receiveNotes" rows="3" placeholder="Note any condition issues or confirm good condition..."></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-success" onclick="markReceived()"><i class="fa fa-box-open"></i> Confirm Receipt</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Setup (Inventory Clerk) -->
+<div class="modal fade" id="setupModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: rgba(232,62,140,0.15);"><h5 class="modal-title" style="color: #a71d5d;"><i class="fa fa-cog" style="margin-right: 0.4rem;"></i> Start Asset Setup</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="setupModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">Setup Notes <small class="text-muted">(Optional)</small></label><textarea class="form-control" id="setupNotes" rows="3" placeholder="OS installation, security configuration, software setup details..."></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn" style="background:#e83e8c;color:#fff;" onclick="startSetup()"><i class="fa fa-cog"></i> Start Setup</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Transfer (Inventory Clerk) -->
+<div class="modal fade" id="transferModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #cce5ff;"><h5 class="modal-title" style="color: #004085;"><i class="fa fa-truck" style="margin-right: 0.4rem;"></i> Transfer to Marketing Assistant</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="transferModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">Transfer Notes <small class="text-muted">(Optional)</small></label><textarea class="form-control" id="transferNotes" rows="3" placeholder="Delivery instructions, special handling..."></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" onclick="transferAsset()"><i class="fa fa-truck"></i> Confirm Transfer</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Deliver (Marketing Assistant) -->
+<div class="modal fade" id="deliverModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #d4edda;"><h5 class="modal-title" style="color: #155724;"><i class="fa fa-check-circle" style="margin-right: 0.4rem;"></i> Confirm Delivery</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="deliverModalInfo"></div>
+                <div class="form-group mb-3"><label class="form-label">Delivery Notes <small class="text-muted">(Optional)</small></label><textarea class="form-control" id="deliverNotes" rows="3" placeholder="Delivery confirmation details..."></textarea></div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-success" onclick="confirmDelivery()"><i class="fa fa-check-circle"></i> Confirm Delivered</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Failed Delivery (Marketing Assistant) -->
+<div class="modal fade" id="failedDeliveryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background: #f8d7da;"><h5 class="modal-title" style="color: #721c24;"><i class="fa fa-exclamation-triangle" style="margin-right: 0.4rem;"></i> Failed Delivery</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body">
+                <div class="alert alert-light" style="font-size:0.85rem;border:1px solid #e0e0e0;" id="failedDeliveryModalInfo"></div>
+                <div class="form-group mb-3">
+                    <label class="form-label">Failure Reason <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="failedDeliveryRemarks" rows="3" required placeholder="e.g., Recipient on leave - Feb 10, 2025. Will attempt redelivery on Feb 12."></textarea>
+                    <span class="text-danger" id="failedDeliveryError" style="font-size:0.8rem;display:none;">Failure reason is required.</span>
+                </div>
+            </div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-danger" onclick="failedDelivery()"><i class="fa fa-exclamation-triangle"></i> Log Failed Delivery</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Cancel Confirmation -->
+<div class="modal fade" id="cancelConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm">
+        <div class="modal-content">
+            <div class="modal-header"><h5 class="modal-title" style="font-size:1rem;"><i class="fa fa-exclamation-triangle" style="color:var(--warning);margin-right:0.3rem;"></i> Cancel Request</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+            <div class="modal-body" style="font-size:0.88rem;">Are you sure you want to cancel request <strong id="cancelRequestId"></strong>?<br><br><span class="text-muted" style="font-size: 0.82rem;">This action cannot be undone.</span></div>
+            <div class="modal-footer"><button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">No, Keep It</button><button type="button" class="btn btn-danger btn-sm" onclick="confirmCancel()"><i class="fa fa-times"></i> Yes, Cancel</button></div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== LOCAL SCRIPTS ===== -->
+<script src="libs/jquery/jquery-3.7.1.min.js"></script>
+<script src="libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="libs/select2/js/select2.min.js"></script>
+<script src="libs/knockout/knockout-3.5.1.min.js"></script>
+
+<script>
+/**
+ * ITAM Asset Request - Prototype v7.0 Scripts
+ * - 4 Roles: Marketing Assistant, Marketing Officer, Inventory Clerk, Finance Manager
+ * - 20+ granular statuses for full workflow lifecycle
+ * - Single master allRequests array with computed tab filters
+ * - Role-based action visibility
+ */
+
+// ============================================================
+// Role Personas
+// ============================================================
+var rolePersonas = {
+    marketing_assistant: { name: 'Juan Dela Cruz', initials: 'JD', color: '#5b67c7' },
+    marketing_officer:   { name: 'Pedro Reyes',    initials: 'PR', color: '#28a745' },
+    inventory_clerk:     { name: 'Grace Tan',      initials: 'GT', color: '#e83e8c' },
+    finance_manager:     { name: 'Ana Torres',     initials: 'AT', color: '#fd7e14' }
+};
+
+// ============================================================
+// Simulated API Data Sources
+// ============================================================
+var employeeApiData = [
+    { id: 'EMP-2024-0012', name: 'Juan Dela Cruz', initials: 'JD', avatarColor: '#5b67c7', department: 'Software Development', jobTitle: 'Senior Developer', email: 'juan.delacruz@company.com', phone: '+63 917 123 4567', office: 'Manila HQ - 12F', manager: 'Pedro Reyes' },
+    { id: 'EMP-2024-0018', name: 'Antonio Santos', initials: 'AS', avatarColor: '#fd7e14', department: 'IT Infrastructure', jobTitle: 'Systems Administrator', email: 'antonio.santos@company.com', phone: '+63 918 234 5678', office: 'Manila HQ - 10F', manager: 'Pedro Reyes' },
+    { id: 'EMP-2024-0025', name: 'Carlo Lim', initials: 'CL', avatarColor: '#6f42c1', department: 'Data Engineering', jobTitle: 'Data Analyst', email: 'carlo.lim@company.com', phone: '+63 919 345 6789', office: 'Manila HQ - 11F', manager: 'Ana Torres' },
+    { id: 'EMP-2024-0031', name: 'Elena Villanueva', initials: 'EV', avatarColor: '#20c997', department: 'Quality Assurance', jobTitle: 'QA Lead', email: 'elena.villanueva@company.com', phone: '+63 920 456 7890', office: 'Manila HQ - 12F', manager: 'Ana Torres' },
+    { id: 'EMP-2024-0044', name: 'Roberto Cruz', initials: 'RC', avatarColor: '#e83e8c', department: 'Product Management', jobTitle: 'Product Owner', email: 'roberto.cruz@company.com', phone: '+63 921 567 8901', office: 'Cebu Office - 3F', manager: 'Grace Tan' }
+];
+
+var consultantApiData = [
+    { id: 'CON-2024-0003', name: 'Maria Reyes', initials: 'MR', avatarColor: '#28a745', department: 'Software Development', jobTitle: 'UI/UX Consultant', email: 'maria.reyes@vendor-a.com', phone: '+63 922 678 9012', office: 'Manila HQ - 12F (Contractor Area)', manager: 'Juan Dela Cruz' },
+    { id: 'CON-2024-0007', name: 'Sofia Garcia', initials: 'SG', avatarColor: '#17a2b8', department: 'IT Infrastructure', jobTitle: 'Network Consultant', email: 'sofia.garcia@vendor-b.com', phone: '+63 923 789 0123', office: 'Manila HQ - 10F (Contractor Area)', manager: 'Antonio Santos' },
+    { id: 'CON-2024-0011', name: 'James Tan', initials: 'JT', avatarColor: '#6610f2', department: 'Data Engineering', jobTitle: 'BI Consultant', email: 'james.tan@vendor-c.com', phone: '+63 924 890 1234', office: 'Remote', manager: 'Carlo Lim' },
+    { id: 'CON-2024-0015', name: 'Angela Bautista', initials: 'AB', avatarColor: '#fd7e14', department: 'Software Development', jobTitle: 'DevOps Consultant', email: 'angela.bautista@vendor-a.com', phone: '+63 925 901 2345', office: 'Manila HQ - 12F (Contractor Area)', manager: 'Juan Dela Cruz' }
+];
+
+// ============================================================
+// Status / Priority Data Model
+// ============================================================
+var statusColorMap = {
+    requested:                      { color: '#ffc107', bg: 'rgba(255,193,7,0.2)', text: '#856404' },
+    approved:                       { color: '#28a745', bg: 'rgba(40,167,69,0.2)', text: '#155724' },
+    searching_inventory:            { color: '#17a2b8', bg: 'rgba(23,162,184,0.2)', text: '#0c5460' },
+    match_found:                    { color: '#20c997', bg: 'rgba(32,201,151,0.2)', text: '#0b6848' },
+    no_match_alternative_proposed:  { color: '#6f42c1', bg: 'rgba(111,66,193,0.2)', text: '#4a2d85' },
+    alternative_pending_client:     { color: '#6f42c1', bg: 'rgba(111,66,193,0.2)', text: '#4a2d85' },
+    alternative_accepted:           { color: '#28a745', bg: 'rgba(40,167,69,0.2)', text: '#155724' },
+    alternative_rejected:           { color: '#dc3545', bg: 'rgba(220,53,69,0.2)', text: '#721c24' },
+    pending_purchase_approval:      { color: '#fd7e14', bg: 'rgba(253,126,20,0.2)', text: '#854d0e' },
+    purchase_approved:              { color: '#28a745', bg: 'rgba(40,167,69,0.2)', text: '#155724' },
+    purchase_rejected:              { color: '#dc3545', bg: 'rgba(220,53,69,0.2)', text: '#721c24' },
+    pending_receipt:                { color: '#007bff', bg: 'rgba(0,123,255,0.2)', text: '#004085' },
+    received_by_finance:            { color: '#007bff', bg: 'rgba(0,123,255,0.2)', text: '#004085' },
+    reserved:                       { color: '#6610f2', bg: 'rgba(102,16,242,0.2)', text: '#4709ac' },
+    setting_up:                     { color: '#e83e8c', bg: 'rgba(232,62,140,0.2)', text: '#a71d5d' },
+    ready_for_transfer:             { color: '#20c997', bg: 'rgba(32,201,151,0.2)', text: '#0b6848' },
+    in_transit_to_recipient:        { color: '#007bff', bg: 'rgba(0,123,255,0.2)', text: '#004085' },
+    delivered:                      { color: '#28a745', bg: 'rgba(40,167,69,0.2)', text: '#155724' },
+    failed_delivery:                { color: '#dc3545', bg: 'rgba(220,53,69,0.2)', text: '#721c24' },
+    cancelled:                      { color: '#6c757d', bg: 'rgba(108,117,125,0.2)', text: '#383d41' }
+};
+
+var statusDisplayMap = {
+    requested: 'Requested', approved: 'Approved',
+    searching_inventory: 'Searching Inventory', match_found: 'Match Found',
+    no_match_alternative_proposed: 'Alternative Proposed', alternative_pending_client: 'Pending Client Decision',
+    alternative_accepted: 'Alternative Accepted', alternative_rejected: 'Alternative Rejected',
+    pending_purchase_approval: 'Pending Purchase Approval', purchase_approved: 'Purchase Approved',
+    purchase_rejected: 'Purchase Rejected', pending_receipt: 'Pending Receipt',
+    received_by_finance: 'Received by Finance', reserved: 'Reserved', setting_up: 'Setting Up',
+    ready_for_transfer: 'Ready for Transfer', in_transit_to_recipient: 'In Transit',
+    delivered: 'Delivered', failed_delivery: 'Failed Delivery', cancelled: 'Cancelled'
+};
+
+var statusOrderMap = {
+    requested: 1, approved: 2, searching_inventory: 3, match_found: 4,
+    no_match_alternative_proposed: 5, alternative_pending_client: 6, alternative_accepted: 7,
+    alternative_rejected: 8, pending_purchase_approval: 9, purchase_approved: 10,
+    purchase_rejected: 11, pending_receipt: 12, received_by_finance: 13, reserved: 14,
+    setting_up: 15, ready_for_transfer: 16, in_transit_to_recipient: 17, delivered: 18,
+    failed_delivery: 19, cancelled: 20
+};
+
+var priorityOrderMap = { low: 1, medium: 2, high: 3, critical: 4 };
+
+var categoryIconMap = {
+    'Laptop': 'fa fa-laptop', 'Desktop': 'fa fa-desktop', 'Monitor': 'fa fa-desktop',
+    'Keyboard': 'fa fa-keyboard', 'Mouse': 'fa fa-mouse-pointer', 'Memory (RAM)': 'fa fa-memory',
+    'Storage (SSD/HDD)': 'fa fa-hdd', 'Printer': 'fa fa-print', 'Headset': 'fa fa-headphones',
+    'Webcam': 'fa fa-video', 'Docking Station': 'fa fa-plug', 'Other': 'fa fa-cube'
+};
+
+// Tab status groups
+var pendingReviewStatuses = ['requested', 'alternative_pending_client'];
+var inProgressStatuses = ['approved', 'searching_inventory', 'match_found', 'no_match_alternative_proposed', 'alternative_accepted', 'alternative_rejected', 'reserved', 'setting_up', 'ready_for_transfer', 'in_transit_to_recipient'];
+var purchaseFlowStatuses = ['pending_purchase_approval', 'purchase_approved', 'pending_receipt', 'received_by_finance'];
+var completedStatuses = ['delivered', 'failed_delivery', 'purchase_rejected', 'cancelled'];
+
+function formatDate(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+}
+
+function formatDateLong(dateStr) {
+    if (!dateStr) return '';
+    var d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+}
+
+function nowDateStr() {
+    return new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function getStatusProps(status) {
+    var sc = statusColorMap[status] || statusColorMap.requested;
+    return { statusColor: sc.color, statusBgColor: sc.bg, statusTextColor: sc.text, statusText: statusDisplayMap[status] || status };
+}
+
+function buildRequest(data) {
+    var sc = statusColorMap[data.status] || statusColorMap.requested;
+    var icon = categoryIconMap[data.category] || 'fa fa-cube';
+    var pClass = 'priority-' + data.priority;
+    var pIcon = data.priority === 'critical' ? 'fa-exclamation-circle' : data.priority === 'high' ? 'fa-arrow-up' : data.priority === 'low' ? 'fa-arrow-down' : 'fa-minus';
+    return Object.assign({}, data, {
+        priorityOrder: priorityOrderMap[data.priority] || 2,
+        icon: icon,
+        statusColor: sc.color, statusBgColor: sc.bg, statusTextColor: sc.text,
+        statusText: statusDisplayMap[data.status] || data.status,
+        titleHtml: data.category + ' <span style="font-size:0.75rem;color:#999;font-weight:400;margin-left:0.5rem;">#' + data.requestId + '</span>',
+        subtitleHtml: '<i class="fa fa-flag"></i> <span class="' + pClass + '">' + (data.priority.charAt(0).toUpperCase() + data.priority.slice(1)) + '</span> &nbsp;&bull;&nbsp; <i class="fa fa-calendar-alt"></i> Needed by: ' + formatDate(data.neededByDate) + ' &nbsp;&bull;&nbsp; <i class="fa fa-clock"></i> Submitted: ' + formatDate(data.submittedDate),
+        priorityHtml: '<span class="' + pClass + '"><i class="fa ' + pIcon + '"></i> ' + (data.priority.charAt(0).toUpperCase() + data.priority.slice(1)) + '</span>',
+        searchText: (data.category + ' ' + data.requestId + ' ' + data.employeeName + ' ' + data.status).toLowerCase(),
+        neededByFormatted: formatDateLong(data.neededByDate),
+        submittedFormatted: formatDateLong(data.submittedDate),
+        remarksTextColor: data.remarksTextColor || '', remarksBgColor: data.remarksBgColor || '', remarksBorderColor: data.remarksBorderColor || ''
+    });
+}
+
+function getRemarksStyle(status) {
+    var map = {
+        approved: { text: '#155724', bg: '#d4edda', border: '#c3e6cb' },
+        alternative_accepted: { text: '#155724', bg: '#d4edda', border: '#c3e6cb' },
+        alternative_pending_client: { text: '#4a2d85', bg: '#e8dff5', border: '#c4a8e8' },
+        no_match_alternative_proposed: { text: '#4a2d85', bg: '#e8dff5', border: '#c4a8e8' },
+        alternative_rejected: { text: '#721c24', bg: '#f8d7da', border: '#f5c6cb' },
+        pending_purchase_approval: { text: '#854d0e', bg: '#fff3cd', border: '#ffc107' },
+        purchase_approved: { text: '#155724', bg: '#d4edda', border: '#c3e6cb' },
+        purchase_rejected: { text: '#721c24', bg: '#f8d7da', border: '#f5c6cb' },
+        pending_receipt: { text: '#004085', bg: '#cce5ff', border: '#b8daff' },
+        received_by_finance: { text: '#004085', bg: '#cce5ff', border: '#b8daff' },
+        reserved: { text: '#4709ac', bg: 'rgba(102,16,242,0.1)', border: '#6610f2' },
+        setting_up: { text: '#a71d5d', bg: 'rgba(232,62,140,0.1)', border: '#e83e8c' },
+        ready_for_transfer: { text: '#0b6848', bg: 'rgba(32,201,151,0.1)', border: '#20c997' },
+        in_transit_to_recipient: { text: '#004085', bg: '#cce5ff', border: '#b8daff' },
+        delivered: { text: '#155724', bg: '#d4edda', border: '#c3e6cb' },
+        failed_delivery: { text: '#721c24', bg: '#f8d7da', border: '#f5c6cb' },
+        cancelled: { text: '#383d41', bg: '#e2e3e5', border: '#d6d8db' }
+    };
+    return map[status] || { text: '', bg: '', border: '' };
+}
+
+// ============================================================
+// Knockout ViewModel
+// ============================================================
+function AssetRequestViewModel() {
+    var self = this;
+
+    self.currentRole = ko.observable('marketing_assistant');
+
+    // Single master array - source of truth
+    self.allRequests = ko.observableArray([
+        // Scenario 1 Step 1: REQUESTED
+        buildRequest({ requestId: 'REQ-2025-0050', category: 'Laptop', priority: 'high', status: 'requested', submittedDate: '2025-02-01', neededByDate: '2025-02-28', employeeName: 'Juan Dela Cruz', employeeInitials: 'JD', employeeAvatarColor: '#5b67c7', personType: 'employee', description: 'Need a new laptop for development work. Current machine is 5 years old.', remarks: null }),
+
+        // Scenario 1 Step 2: REQUESTED (awaiting Marketing Officer approval)
+        buildRequest({ requestId: 'REQ-2025-0049', category: 'Monitor', priority: 'medium', status: 'requested', submittedDate: '2025-01-28', neededByDate: '2025-03-01', employeeName: 'Maria Reyes', employeeInitials: 'MR', employeeAvatarColor: '#28a745', personType: 'consultant', description: 'Secondary monitor for multi-tasking during UI/UX design work.', remarks: null }),
+
+        // Scenario 4 Step 3: APPROVED
+        buildRequest({ requestId: 'REQ-2025-0048', category: 'Laptop', priority: 'critical', status: 'approved', submittedDate: '2025-01-25', neededByDate: '2025-02-10', employeeName: 'Antonio Santos', employeeInitials: 'AS', employeeAvatarColor: '#fd7e14', personType: 'employee', description: 'Laptop failure. Urgent replacement needed for infrastructure work.', remarks: '<strong>Approved:</strong> Priority replacement authorized. &mdash; <em>Pedro Reyes, Jan 27, 2025</em>', remarksTextColor: '#155724', remarksBgColor: '#d4edda', remarksBorderColor: '#c3e6cb' }),
+
+        // Scenario 4 Step 4: SEARCHING_INVENTORY
+        buildRequest({ requestId: 'REQ-2025-0047', category: 'Desktop', priority: 'medium', status: 'searching_inventory', submittedDate: '2025-01-22', neededByDate: '2025-02-20', employeeName: 'Carlo Lim', employeeInitials: 'CL', employeeAvatarColor: '#6f42c1', personType: 'employee', description: 'High-performance desktop for data engineering and analytics.', remarks: '<strong>Approved:</strong> Routing to inventory search. &mdash; <em>Pedro Reyes, Jan 24, 2025</em>', remarksTextColor: '#0c5460', remarksBgColor: 'rgba(23,162,184,0.2)', remarksBorderColor: '#17a2b8' }),
+
+        // Scenario 1 Step 7: ALTERNATIVE_PENDING_CLIENT
+        buildRequest({ requestId: 'REQ-2025-0046', category: 'Laptop', priority: 'high', status: 'alternative_pending_client', submittedDate: '2025-01-18', neededByDate: '2025-02-15', employeeName: 'Elena Villanueva', employeeInitials: 'EV', employeeAvatarColor: '#20c997', personType: 'employee', description: 'Need higher-spec laptop for automated test suite execution.', remarks: '<strong>Suggested Alternative:</strong> Desktop &mdash; More powerful specs available at lower cost. &mdash; <em>Grace Tan, Jan 22, 2025</em>', suggestedCategory: 'Desktop', originalCategory: 'Laptop', remarksTextColor: '#4a2d85', remarksBgColor: '#e8dff5', remarksBorderColor: '#c4a8e8' }),
+
+        // Scenario 1 Step 10: PENDING_PURCHASE_APPROVAL
+        buildRequest({ requestId: 'REQ-2025-0045', category: 'Memory (RAM)', priority: 'medium', status: 'pending_purchase_approval', submittedDate: '2025-01-15', neededByDate: '2025-02-10', employeeName: 'Juan Dela Cruz', employeeInitials: 'JD', employeeAvatarColor: '#5b67c7', personType: 'employee', description: 'RAM upgrade from 8GB to 32GB for Docker development.', remarks: '<strong>Purchase Request:</strong> 32GB DDR5 kit, estimated PHP 8,500. Vendor: Kingston. &mdash; <em>Grace Tan, Jan 20, 2025</em>', remarksTextColor: '#854d0e', remarksBgColor: '#fff3cd', remarksBorderColor: '#ffc107' }),
+
+        // Scenario 1 Step 11: PURCHASE_APPROVED
+        buildRequest({ requestId: 'REQ-2025-0044', category: 'Laptop', priority: 'high', status: 'purchase_approved', submittedDate: '2025-01-12', neededByDate: '2025-02-05', employeeName: 'Roberto Cruz', employeeInitials: 'RC', employeeAvatarColor: '#e83e8c', personType: 'employee', description: 'New laptop for product management and client demos.', remarks: '<strong>Purchase Approved:</strong> Budget allocated from Q1 funds. &mdash; <em>Ana Torres, Jan 18, 2025</em>', remarksTextColor: '#155724', remarksBgColor: '#d4edda', remarksBorderColor: '#c3e6cb' }),
+
+        // Scenario 1 Step 12: PENDING_RECEIPT
+        buildRequest({ requestId: 'REQ-2025-0043', category: 'Monitor', priority: 'low', status: 'pending_receipt', submittedDate: '2025-01-10', neededByDate: '2025-02-28', employeeName: 'Angela Bautista', employeeInitials: 'AB', employeeAvatarColor: '#fd7e14', personType: 'consultant', description: 'Monitor for DevOps dashboard monitoring.', remarks: '<strong>Ordered:</strong> PO-2025-0089, Dell 24" Monitor, est. delivery 2 weeks. &mdash; <em>Ana Torres, Jan 15, 2025</em>', remarksTextColor: '#004085', remarksBgColor: '#cce5ff', remarksBorderColor: '#b8daff' }),
+
+        // Scenario 3 Step 9: RESERVED
+        buildRequest({ requestId: 'REQ-2025-0042', category: 'Keyboard', priority: 'low', status: 'reserved', submittedDate: '2025-01-08', neededByDate: '2025-01-30', employeeName: 'Juan Dela Cruz', employeeInitials: 'JD', employeeAvatarColor: '#5b67c7', personType: 'employee', description: 'Replacement for broken keyboard.', remarks: '<strong>Reserved:</strong> Asset ITAM-KB-0092 (Logitech MX Keys) retrieved from inventory. &mdash; <em>Grace Tan, Jan 12, 2025</em>', remarksTextColor: '#4709ac', remarksBgColor: 'rgba(102,16,242,0.1)', remarksBorderColor: '#6610f2' }),
+
+        // Scenario 4 Step 7: SETTING_UP
+        buildRequest({ requestId: 'REQ-2025-0041', category: 'Laptop', priority: 'medium', status: 'setting_up', submittedDate: '2025-01-05', neededByDate: '2025-01-25', employeeName: 'Sofia Garcia', employeeInitials: 'SG', employeeAvatarColor: '#17a2b8', personType: 'consultant', description: 'Laptop for network infrastructure consulting.', remarks: '<strong>Setting Up:</strong> Installing Windows 11, security tools, and VPN client. &mdash; <em>Grace Tan, Jan 10, 2025</em>', remarksTextColor: '#a71d5d', remarksBgColor: 'rgba(232,62,140,0.1)', remarksBorderColor: '#e83e8c' }),
+
+        // Scenario 4 Step 8: READY_FOR_TRANSFER
+        buildRequest({ requestId: 'REQ-2025-0040', category: 'Desktop', priority: 'high', status: 'ready_for_transfer', submittedDate: '2025-01-03', neededByDate: '2025-01-20', employeeName: 'James Tan', employeeInitials: 'JT', employeeAvatarColor: '#6610f2', personType: 'consultant', description: 'BI workstation for data visualization.', remarks: '<strong>Setup Complete:</strong> Windows 11, Power BI, Tableau installed. Ready for transfer. &mdash; <em>Grace Tan, Jan 08, 2025</em>', remarksTextColor: '#0b6848', remarksBgColor: 'rgba(32,201,151,0.1)', remarksBorderColor: '#20c997' }),
+
+        // Scenario 4 Step 9: IN_TRANSIT_TO_RECIPIENT
+        buildRequest({ requestId: 'REQ-2025-0039', category: 'Webcam', priority: 'low', status: 'in_transit_to_recipient', submittedDate: '2024-12-28', neededByDate: '2025-01-15', employeeName: 'Roberto Cruz', employeeInitials: 'RC', employeeAvatarColor: '#e83e8c', personType: 'employee', description: 'HD webcam for client video calls.', remarks: '<strong>In Transit:</strong> Transferred to Marketing Assistant for delivery. &mdash; <em>Grace Tan, Jan 05, 2025</em>', remarksTextColor: '#004085', remarksBgColor: '#cce5ff', remarksBorderColor: '#b8daff' }),
+
+        // Scenario 4 Step 10: DELIVERED
+        buildRequest({ requestId: 'REQ-2025-0038', category: 'Headset', priority: 'medium', status: 'delivered', submittedDate: '2024-12-20', neededByDate: '2025-01-10', employeeName: 'Antonio Santos', employeeInitials: 'AS', employeeAvatarColor: '#fd7e14', personType: 'employee', description: 'Replacement headset for meeting audio issues.', remarks: '<strong>Delivered:</strong> Asset ITAM-HS-0045 (Jabra Evolve2 75) delivered to employee. &mdash; <em>Juan Dela Cruz, Jan 02, 2025</em>', remarksTextColor: '#155724', remarksBgColor: '#d4edda', remarksBorderColor: '#c3e6cb' }),
+
+        // Scenario 2: PURCHASE_REJECTED (terminal)
+        buildRequest({ requestId: 'REQ-2025-0037', category: 'Storage (SSD/HDD)', priority: 'low', status: 'purchase_rejected', submittedDate: '2024-12-15', neededByDate: '2025-01-15', employeeName: 'Carlo Lim', employeeInitials: 'CL', employeeAvatarColor: '#6f42c1', personType: 'employee', description: 'External SSD for project backups.', remarks: '<strong>Purchase Rejected:</strong> Budget constraints. Cost exceeds approval threshold for Q4. &mdash; <em>Ana Torres, Dec 22, 2024</em>', remarksTextColor: '#721c24', remarksBgColor: '#f8d7da', remarksBorderColor: '#f5c6cb' }),
+
+        // Failed delivery scenario
+        buildRequest({ requestId: 'REQ-2025-0036', category: 'Mouse', priority: 'low', status: 'failed_delivery', submittedDate: '2024-12-10', neededByDate: '2025-01-05', employeeName: 'Elena Villanueva', employeeInitials: 'EV', employeeAvatarColor: '#20c997', personType: 'employee', description: 'Ergonomic mouse for workstation.', remarks: '<strong>Failed Delivery:</strong> Recipient on leave - Jan 06, 2025. Will attempt redelivery on Jan 13. &mdash; <em>Juan Dela Cruz, Jan 06, 2025</em>', remarksTextColor: '#721c24', remarksBgColor: '#f8d7da', remarksBorderColor: '#f5c6cb' })
+    ]);
+
+    // Selected request for view modal
+    self.selectedRequest = ko.observable(null);
+    self.actionTarget = ko.observable(null);
+    self.pendingCancelId = ko.observable(null);
+
+    // ===== Toolbar state observables =====
+    self.empSortField = ko.observable('submitted'); self.empSortDir = ko.observable('desc'); self.empGroupField = ko.observable('none'); self.empSearch = ko.observable('');
+    self.adminPendingSortField = ko.observable('submitted'); self.adminPendingSortDir = ko.observable('desc'); self.adminPendingGroupField = ko.observable('none'); self.adminPendingSearch = ko.observable('');
+    self.adminInProgressSortField = ko.observable('submitted'); self.adminInProgressSortDir = ko.observable('desc'); self.adminInProgressGroupField = ko.observable('none'); self.adminInProgressSearch = ko.observable('');
+    self.adminPurchaseSortField = ko.observable('submitted'); self.adminPurchaseSortDir = ko.observable('desc'); self.adminPurchaseGroupField = ko.observable('none'); self.adminPurchaseSearch = ko.observable('');
+    self.adminCompletedSortField = ko.observable('submitted'); self.adminCompletedSortDir = ko.observable('desc'); self.adminCompletedGroupField = ko.observable('none'); self.adminCompletedSearch = ko.observable('');
+    self.adminAllSortField = ko.observable('submitted'); self.adminAllSortDir = ko.observable('desc'); self.adminAllGroupField = ko.observable('none'); self.adminAllSearch = ko.observable('');
+
+    // ===== Helper: build filtered/sorted/grouped computed =====
+    function buildFilteredComputed(filterFn, searchObs, sortFieldObs, sortDirObs, groupFieldObs) {
+        return ko.computed(function() {
+            var items = self.allRequests().filter(filterFn);
+            var search = searchObs().toLowerCase();
+            var sortField = sortFieldObs();
+            var sortDir = sortDirObs();
+            var groupField = groupFieldObs();
+            if (search) {
+                items = items.filter(function(r) {
+                    return r.searchText.indexOf(search) !== -1 || r.description.toLowerCase().indexOf(search) !== -1 || r.category.toLowerCase().indexOf(search) !== -1 || r.employeeName.toLowerCase().indexOf(search) !== -1;
+                });
+            }
+            items.sort(function(a, b) {
+                var va, vb, cmp;
+                switch (sortField) {
+                    case 'submitted': va = a.submittedDate; vb = b.submittedDate; break;
+                    case 'neededby': va = a.neededByDate; vb = b.neededByDate; break;
+                    case 'priority': va = a.priorityOrder; vb = b.priorityOrder; break;
+                    case 'category': va = a.category.toLowerCase(); vb = b.category.toLowerCase(); break;
+                    case 'status': va = statusOrderMap[a.status] || 0; vb = statusOrderMap[b.status] || 0; break;
+                    case 'employee': va = a.employeeName.toLowerCase(); vb = b.employeeName.toLowerCase(); break;
+                    default: va = a.submittedDate; vb = b.submittedDate;
+                }
+                if (typeof va === 'number' && typeof vb === 'number') { cmp = va - vb; } else { cmp = String(va).localeCompare(String(vb)); }
+                return sortDir === 'asc' ? cmp : -cmp;
+            });
+            if (groupField !== 'none') {
+                var groups = {}, order = [];
+                items.forEach(function(r) {
+                    var gv;
+                    switch (groupField) { case 'status': gv = statusDisplayMap[r.status] || r.status; break; case 'category': gv = r.category; break; case 'priority': gv = r.priority; break; case 'employee': gv = r.employeeName; break; default: gv = ''; }
+                    gv = gv.charAt(0).toUpperCase() + gv.slice(1);
+                    if (!groups[gv]) { groups[gv] = []; order.push(gv); } groups[gv].push(r);
+                });
+                var result = [];
+                order.forEach(function(g) { result.push({ _isGroupHeader: true, label: g + ' (' + groups[g].length + ')' }); groups[g].forEach(function(r) { result.push(r); }); });
+                return result;
+            }
+            return items;
+        });
+    }
+
+    // ===== Tab filter computeds =====
+    self.filteredPendingReview = buildFilteredComputed(function(r) { return pendingReviewStatuses.indexOf(r.status) !== -1; }, self.adminPendingSearch, self.adminPendingSortField, self.adminPendingSortDir, self.adminPendingGroupField);
+    self.filteredInProgress = buildFilteredComputed(function(r) { return inProgressStatuses.indexOf(r.status) !== -1; }, self.adminInProgressSearch, self.adminInProgressSortField, self.adminInProgressSortDir, self.adminInProgressGroupField);
+    self.filteredPurchaseFlow = buildFilteredComputed(function(r) { return purchaseFlowStatuses.indexOf(r.status) !== -1; }, self.adminPurchaseSearch, self.adminPurchaseSortField, self.adminPurchaseSortDir, self.adminPurchaseGroupField);
+    self.filteredCompleted = buildFilteredComputed(function(r) { return completedStatuses.indexOf(r.status) !== -1; }, self.adminCompletedSearch, self.adminCompletedSortField, self.adminCompletedSortDir, self.adminCompletedGroupField);
+    self.filteredAllRequests = buildFilteredComputed(function() { return true; }, self.adminAllSearch, self.adminAllSortField, self.adminAllSortDir, self.adminAllGroupField);
+    self.filteredEmployeeRequests = buildFilteredComputed(function() { return true; }, self.empSearch, self.empSortField, self.empSortDir, self.empGroupField);
+
+    // ===== Counter updates =====
+    function subscribeCounter(computed, counterId, sourceFilter) {
+        computed.subscribe(function(items) {
+            var count = items.filter(function(i) { return !i._isGroupHeader; }).length;
+            var total = sourceFilter ? self.allRequests().filter(sourceFilter).length : self.allRequests().length;
+            var el = document.getElementById(counterId);
+            if (el) el.textContent = 'Showing ' + count + ' of ' + total + ' items';
+        });
+    }
+    subscribeCounter(self.filteredPendingReview, 'adminPendingCounter', function(r) { return pendingReviewStatuses.indexOf(r.status) !== -1; });
+    subscribeCounter(self.filteredInProgress, 'adminInProgressCounter', function(r) { return inProgressStatuses.indexOf(r.status) !== -1; });
+    subscribeCounter(self.filteredPurchaseFlow, 'adminPurchaseCounter', function(r) { return purchaseFlowStatuses.indexOf(r.status) !== -1; });
+    subscribeCounter(self.filteredCompleted, 'adminCompletedCounter', function(r) { return completedStatuses.indexOf(r.status) !== -1; });
+    subscribeCounter(self.filteredAllRequests, 'adminAllCounter', null);
+    subscribeCounter(self.filteredEmployeeRequests, 'empCounter', null);
+
+    // ===== Stats =====
+    self.adminStats = ko.computed(function() {
+        var all = self.allRequests();
+        return {
+            total: all.length,
+            pendingReview: all.filter(function(r) { return pendingReviewStatuses.indexOf(r.status) !== -1; }).length,
+            inProgress: all.filter(function(r) { return inProgressStatuses.indexOf(r.status) !== -1; }).length,
+            purchaseFlow: all.filter(function(r) { return purchaseFlowStatuses.indexOf(r.status) !== -1; }).length,
+            completed: all.filter(function(r) { return completedStatuses.indexOf(r.status) !== -1; }).length
+        };
+    });
+
+    self.employeeStats = ko.computed(function() {
+        var all = self.allRequests();
+        var pendingSet = ['requested', 'alternative_pending_client'];
+        var completedSet = ['delivered', 'failed_delivery', 'purchase_rejected', 'cancelled'];
+        return {
+            total: all.length,
+            pending: all.filter(function(r) { return pendingSet.indexOf(r.status) !== -1; }).length,
+            inProgress: all.filter(function(r) { return pendingSet.indexOf(r.status) === -1 && completedSet.indexOf(r.status) === -1; }).length,
+            completed: all.filter(function(r) { return completedSet.indexOf(r.status) !== -1; }).length
+        };
+    });
+
+    // ===== Actions =====
+    self.viewRequest = function(request) {
+        self.selectedRequest(request);
+        new bootstrap.Modal(document.getElementById('viewRequestModal')).show();
+    };
+
+    self.cancelRequest = function(request) {
+        self.pendingCancelId(request.requestId);
+        document.getElementById('cancelRequestId').textContent = '#' + request.requestId;
+        new bootstrap.Modal(document.getElementById('cancelConfirmModal')).show();
+    };
+
+    // Helper to update a request in allRequests
+    function updateRequest(requestId, newProps) {
+        var items = self.allRequests();
+        for (var i = 0; i < items.length; i++) {
+            if (items[i].requestId === requestId) {
+                var updated = buildRequest(Object.assign({}, items[i], newProps));
+                self.allRequests.splice(i, 1, updated);
+                return updated;
+            }
+        }
+        return null;
+    }
+
+    function makeModalInfo(r) {
+        return '<strong>Request:</strong> #' + r.requestId + '<br><strong>Employee:</strong> ' + r.employeeName + '<br><strong>Asset Type:</strong> ' + r.category + '<br><strong>Priority:</strong> ' + r.priorityHtml;
+    }
+
+    // Marketing Officer: Approve
+    self.openApproveModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('approveModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('approveRemarks').value = '';
+        new bootstrap.Modal(document.getElementById('approveModal')).show();
+    };
+
+    // Marketing Officer: Reject
+    self.openRejectModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('rejectModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('rejectRemarks').value = '';
+        document.getElementById('rejectRemarksError').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('rejectModal')).show();
+    };
+
+    // Inventory Clerk: Match Found -> RESERVED (direct)
+    self.matchFound = function(r) {
+        if (!confirm('Confirm exact match found in inventory for Request #' + r.requestId + '?')) return;
+        var rs = getRemarksStyle('reserved');
+        updateRequest(r.requestId, { status: 'reserved', remarks: '<strong>Match Found & Reserved:</strong> Exact match found in inventory. Asset reserved. &mdash; <em>Grace Tan, ' + nowDateStr() + '</em>', remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border });
+        alert('Request #' + r.requestId + ' - Match found! Asset reserved.');
+    };
+
+    // Inventory Clerk: Suggest Alternative
+    self.openSuggestModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('suggestModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('suggestCategory').value = '';
+        document.getElementById('suggestRemarks').value = '';
+        document.getElementById('suggestCategoryError').style.display = 'none';
+        document.getElementById('suggestRemarksError').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('suggestModal')).show();
+    };
+
+    // Inventory Clerk: Purchase Request
+    self.openPurchaseRequestModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('purchaseReqModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('purchaseVendor').value = '';
+        document.getElementById('purchaseCost').value = '';
+        document.getElementById('purchaseJustification').value = '';
+        document.getElementById('purchaseJustError').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('purchaseRequestModal')).show();
+    };
+
+    // Inventory Clerk: Reserve
+    self.reserveAsset = function(r) {
+        if (!confirm('Reserve asset for Request #' + r.requestId + '?')) return;
+        var rs = getRemarksStyle('reserved');
+        updateRequest(r.requestId, { status: 'reserved', remarks: '<strong>Reserved:</strong> Asset retrieved and reserved for this request. &mdash; <em>Grace Tan, ' + nowDateStr() + '</em>', remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border });
+        alert('Asset reserved for Request #' + r.requestId);
+    };
+
+    // Inventory Clerk: Start Setup
+    self.openSetupModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('setupModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('setupNotes').value = '';
+        new bootstrap.Modal(document.getElementById('setupModal')).show();
+    };
+
+    // Inventory Clerk: Complete Setup
+    self.completeSetup = function(r) {
+        if (!confirm('Mark setup as complete for Request #' + r.requestId + '?')) return;
+        var rs = getRemarksStyle('ready_for_transfer');
+        updateRequest(r.requestId, { status: 'ready_for_transfer', remarks: '<strong>Setup Complete:</strong> OS, security, and software configured. Ready for transfer. &mdash; <em>Grace Tan, ' + nowDateStr() + '</em>', remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border });
+        alert('Setup complete! Request #' + r.requestId + ' is ready for transfer.');
+    };
+
+    // Inventory Clerk: Transfer
+    self.openTransferModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('transferModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('transferNotes').value = '';
+        new bootstrap.Modal(document.getElementById('transferModal')).show();
+    };
+
+    // Finance Manager: Approve Purchase
+    self.openApprovePurchaseModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('approvePurchaseModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('approvePurchaseRemarks').value = '';
+        new bootstrap.Modal(document.getElementById('approvePurchaseModal')).show();
+    };
+
+    // Finance Manager: Reject Purchase
+    self.openRejectPurchaseModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('rejectPurchaseModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('purchaseRejectReason').value = '';
+        document.getElementById('purchaseRejectRemarks').value = '';
+        document.getElementById('purchaseRejectError').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('rejectPurchaseModal')).show();
+    };
+
+    // Finance Manager: Order from Vendor
+    self.openOrderModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('orderModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('orderPO').value = '';
+        document.getElementById('orderVendorName').value = '';
+        document.getElementById('orderDeliveryEst').value = '';
+        document.getElementById('orderRemarks').value = '';
+        new bootstrap.Modal(document.getElementById('orderModal')).show();
+    };
+
+    // Finance Manager: Mark Received
+    self.openReceiveModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('receiveModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('receiveNotes').value = '';
+        new bootstrap.Modal(document.getElementById('receiveModal')).show();
+    };
+
+    // Marketing Assistant: Deliver
+    self.openDeliverModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('deliverModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('deliverNotes').value = '';
+        new bootstrap.Modal(document.getElementById('deliverModal')).show();
+    };
+
+    // Marketing Assistant: Failed Delivery
+    self.openFailedDeliveryModal = function(r) {
+        self.actionTarget(r);
+        document.getElementById('failedDeliveryModalInfo').innerHTML = makeModalInfo(r);
+        document.getElementById('failedDeliveryRemarks').value = '';
+        document.getElementById('failedDeliveryError').style.display = 'none';
+        new bootstrap.Modal(document.getElementById('failedDeliveryModal')).show();
+    };
+
+    // Marketing Assistant: Accept Alternative (records verbal client confirmation)
+    self.acceptAlternative = function(r) {
+        if (!confirm('Record that the client verbally accepted the suggested alternative (' + (r.suggestedCategory || 'N/A') + ') for Request #' + r.requestId + '?')) return;
+        var rs = getRemarksStyle('alternative_accepted');
+        updateRequest(r.requestId, { status: 'alternative_accepted', category: r.suggestedCategory || r.category, remarks: '<strong>Alternative Accepted:</strong> Client verbally confirmed. Changed from ' + (r.originalCategory || r.category) + ' to ' + (r.suggestedCategory || r.category) + '. &mdash; <em>Juan Dela Cruz, ' + nowDateStr() + '</em>', remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border });
+        alert('Client acceptance recorded for Request #' + r.requestId);
+    };
+
+    // Marketing Assistant: Decline Alternative (records verbal client decline)
+    self.declineAlternative = function(r) {
+        if (!confirm('Record that the client verbally declined the suggested alternative for Request #' + r.requestId + '?')) return;
+        var rs = getRemarksStyle('alternative_rejected');
+        updateRequest(r.requestId, { status: 'alternative_rejected', category: r.originalCategory || r.category, remarks: '<strong>Alternative Rejected:</strong> Client verbally declined alternative. Original request for ' + (r.originalCategory || r.category) + ' maintained. &mdash; <em>Juan Dela Cruz, ' + nowDateStr() + '</em>', remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border });
+        alert('Client decline recorded for Request #' + r.requestId);
+    };
+
+    // Marketing Assistant: Forward to Client (mark as pending verbal confirmation)
+    self.forwardToClient = function(r) {
+        if (!confirm('Mark Request #' + r.requestId + ' as pending verbal confirmation from the client?')) return;
+        var rs = getRemarksStyle('alternative_pending_client');
+        updateRequest(r.requestId, { status: 'alternative_pending_client', remarks: r.remarks, remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border });
+        alert('Request #' + r.requestId + ' marked as pending client confirmation.');
+    };
+}
+
+var vm = new AssetRequestViewModel();
+
+// ============================================================
+// Action Functions (modal confirms)
+// ============================================================
+function approveRequest() {
+    var r = vm.actionTarget(); if (!r) return;
+    var remarks = document.getElementById('approveRemarks').value;
+    var rs = getRemarksStyle('searching_inventory');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'searching_inventory',
+                remarks: '<strong>Approved:</strong> ' + (remarks || 'Request approved.') + ' Routing to inventory search. &mdash; <em>Pedro Reyes, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Request #' + r.requestId + ' approved! Routed to Inventory Clerk.');
+    bootstrap.Modal.getInstance(document.getElementById('approveModal')).hide();
+    vm.actionTarget(null);
+}
+
+function rejectRequest() {
+    var r = vm.actionTarget(); if (!r) return;
+    var remarks = document.getElementById('rejectRemarks').value;
+    if (!remarks || !remarks.trim()) { document.getElementById('rejectRemarksError').style.display = 'block'; return; }
+    document.getElementById('rejectRemarksError').style.display = 'none';
+    var rs = getRemarksStyle('cancelled');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'cancelled',
+                remarks: '<strong>Rejected:</strong> ' + remarks + ' &mdash; <em>Pedro Reyes, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Request #' + r.requestId + ' rejected.');
+    bootstrap.Modal.getInstance(document.getElementById('rejectModal')).hide();
+    vm.actionTarget(null);
+}
+
+function suggestAlternative() {
+    var r = vm.actionTarget(); if (!r) return;
+    var category = document.getElementById('suggestCategory').value;
+    var remarks = document.getElementById('suggestRemarks').value;
+    var valid = true;
+    if (!category) { document.getElementById('suggestCategoryError').style.display = 'block'; valid = false; } else { document.getElementById('suggestCategoryError').style.display = 'none'; }
+    if (!remarks || !remarks.trim()) { document.getElementById('suggestRemarksError').style.display = 'block'; valid = false; } else { document.getElementById('suggestRemarksError').style.display = 'none'; }
+    if (!valid) return;
+    var rs = getRemarksStyle('no_match_alternative_proposed');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'no_match_alternative_proposed',
+                suggestedCategory: category, originalCategory: r.category,
+                remarks: '<strong>No Match - Alternative Proposed:</strong> ' + category + ' &mdash; ' + remarks + ' &mdash; <em>Grace Tan, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Suggestion sent for Request #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('suggestModal')).hide();
+    vm.actionTarget(null);
+}
+
+function createPurchaseRequest() {
+    var r = vm.actionTarget(); if (!r) return;
+    var just = document.getElementById('purchaseJustification').value;
+    if (!just || !just.trim()) { document.getElementById('purchaseJustError').style.display = 'block'; return; }
+    document.getElementById('purchaseJustError').style.display = 'none';
+    var vendor = document.getElementById('purchaseVendor').value;
+    var cost = document.getElementById('purchaseCost').value;
+    var rs = getRemarksStyle('pending_purchase_approval');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'pending_purchase_approval',
+                remarks: '<strong>Purchase Request:</strong> ' + just + (vendor ? ' Vendor: ' + vendor + '.' : '') + (cost ? ' Est. cost: ' + cost + '.' : '') + ' &mdash; <em>Grace Tan, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Purchase request created for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('purchaseRequestModal')).hide();
+    vm.actionTarget(null);
+}
+
+function approvePurchase() {
+    var r = vm.actionTarget(); if (!r) return;
+    var remarks = document.getElementById('approvePurchaseRemarks').value;
+    var rs = getRemarksStyle('purchase_approved');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'purchase_approved',
+                remarks: '<strong>Purchase Approved:</strong> ' + (remarks || 'Approved.') + ' &mdash; <em>Ana Torres, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Purchase approved for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('approvePurchaseModal')).hide();
+    vm.actionTarget(null);
+}
+
+function rejectPurchase() {
+    var r = vm.actionTarget(); if (!r) return;
+    var reason = document.getElementById('purchaseRejectReason').value;
+    var remarks = document.getElementById('purchaseRejectRemarks').value;
+    if (!reason || !remarks || !remarks.trim()) { document.getElementById('purchaseRejectError').style.display = 'block'; return; }
+    document.getElementById('purchaseRejectError').style.display = 'none';
+    var rs = getRemarksStyle('purchase_rejected');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'purchase_rejected',
+                remarks: '<strong>Purchase Rejected:</strong> ' + reason + '. ' + remarks + ' &mdash; <em>Ana Torres, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Purchase rejected for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('rejectPurchaseModal')).hide();
+    vm.actionTarget(null);
+}
+
+function orderFromVendor() {
+    var r = vm.actionTarget(); if (!r) return;
+    var po = document.getElementById('orderPO').value;
+    var vendor = document.getElementById('orderVendorName').value;
+    var est = document.getElementById('orderDeliveryEst').value;
+    var remarks = document.getElementById('orderRemarks').value;
+    var rs = getRemarksStyle('pending_receipt');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'pending_receipt',
+                remarks: '<strong>Ordered:</strong> ' + (po ? po + ', ' : '') + (vendor ? vendor + ', ' : '') + (est ? 'est. delivery ' + est + '. ' : '') + (remarks || '') + ' &mdash; <em>Ana Torres, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Order placed for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('orderModal')).hide();
+    vm.actionTarget(null);
+}
+
+function markReceived() {
+    var r = vm.actionTarget(); if (!r) return;
+    var notes = document.getElementById('receiveNotes').value;
+    var rs = getRemarksStyle('received_by_finance');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'received_by_finance',
+                remarks: '<strong>Received:</strong> Asset physically received by Finance. ' + (notes || 'Good condition.') + ' &mdash; <em>Ana Torres, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Asset received for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('receiveModal')).hide();
+    vm.actionTarget(null);
+}
+
+function startSetup() {
+    var r = vm.actionTarget(); if (!r) return;
+    var notes = document.getElementById('setupNotes').value;
+    var rs = getRemarksStyle('setting_up');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'setting_up',
+                remarks: '<strong>Setting Up:</strong> ' + (notes || 'Configuring OS, security, and software.') + ' &mdash; <em>Grace Tan, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Setup started for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('setupModal')).hide();
+    vm.actionTarget(null);
+}
+
+function transferAsset() {
+    var r = vm.actionTarget(); if (!r) return;
+    var notes = document.getElementById('transferNotes').value;
+    var rs = getRemarksStyle('in_transit_to_recipient');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'in_transit_to_recipient',
+                remarks: '<strong>In Transit:</strong> Transferred to Marketing Assistant for delivery. ' + (notes || '') + ' &mdash; <em>Grace Tan, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Asset transferred for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('transferModal')).hide();
+    vm.actionTarget(null);
+}
+
+function confirmDelivery() {
+    var r = vm.actionTarget(); if (!r) return;
+    var notes = document.getElementById('deliverNotes').value;
+    var rs = getRemarksStyle('delivered');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'delivered',
+                remarks: '<strong>Delivered:</strong> ' + (notes || 'Asset delivered to employee/consultant.') + ' &mdash; <em>Juan Dela Cruz, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Delivery confirmed for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('deliverModal')).hide();
+    vm.actionTarget(null);
+}
+
+function failedDelivery() {
+    var r = vm.actionTarget(); if (!r) return;
+    var remarks = document.getElementById('failedDeliveryRemarks').value;
+    if (!remarks || !remarks.trim()) { document.getElementById('failedDeliveryError').style.display = 'block'; return; }
+    document.getElementById('failedDeliveryError').style.display = 'none';
+    var rs = getRemarksStyle('failed_delivery');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === r.requestId) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'failed_delivery',
+                remarks: '<strong>Failed Delivery:</strong> ' + remarks + ' &mdash; <em>Juan Dela Cruz, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Failed delivery logged for #' + r.requestId);
+    bootstrap.Modal.getInstance(document.getElementById('failedDeliveryModal')).hide();
+    vm.actionTarget(null);
+}
+
+function confirmCancel() {
+    var id = vm.pendingCancelId();
+    var rs = getRemarksStyle('cancelled');
+    vm.allRequests().forEach(function(item, idx) {
+        if (item.requestId === id) {
+            vm.allRequests.splice(idx, 1, buildRequest(Object.assign({}, item, {
+                status: 'cancelled',
+                remarks: '<strong>Cancelled:</strong> Request cancelled by Marketing Assistant. &mdash; <em>Juan Dela Cruz, ' + nowDateStr() + '</em>',
+                remarksTextColor: rs.text, remarksBgColor: rs.bg, remarksBorderColor: rs.border
+            })));
+        }
+    });
+    alert('Request #' + id + ' has been cancelled.');
+    bootstrap.Modal.getInstance(document.getElementById('cancelConfirmModal')).hide();
+    vm.pendingCancelId(null);
+}
+
+// ============================================================
+// Role Switching
+// ============================================================
+function switchRole(role) {
+    vm.currentRole(role);
+    var persona = rolePersonas[role];
+    document.getElementById('currentUserName').textContent = persona.name;
+    document.getElementById('currentUserAvatar').textContent = persona.initials;
+    document.getElementById('currentUserAvatar').style.background = persona.color;
+}
+
+// ============================================================
+// View & Toolbar Functions
+// ============================================================
+function switchView(view) {
+    document.querySelectorAll('.view-panel').forEach(function(el) { el.classList.remove('active'); });
+    document.querySelectorAll('.view-btn').forEach(function(el) { el.classList.remove('active'); });
+    document.getElementById('view-' + view).classList.add('active');
+    var buttons = document.querySelectorAll('.view-btn');
+    if (view === 'employee' && buttons[0]) buttons[0].classList.add('active');
+    if (view === 'admin' && buttons[1]) buttons[1].classList.add('active');
+    document.getElementById('breadcrumb-current').textContent = view === 'employee' ? 'My Requests' : 'Manage Requests';
+}
+
+var contextMap = {
+    employee:        { sortDir: function() { return vm.empSortDir; }, sortField: function() { return vm.empSortField; }, groupField: function() { return vm.empGroupField; }, search: function() { return vm.empSearch; } },
+    adminPending:    { sortDir: function() { return vm.adminPendingSortDir; }, sortField: function() { return vm.adminPendingSortField; }, groupField: function() { return vm.adminPendingGroupField; }, search: function() { return vm.adminPendingSearch; } },
+    adminInProgress: { sortDir: function() { return vm.adminInProgressSortDir; }, sortField: function() { return vm.adminInProgressSortField; }, groupField: function() { return vm.adminInProgressGroupField; }, search: function() { return vm.adminInProgressSearch; } },
+    adminPurchase:   { sortDir: function() { return vm.adminPurchaseSortDir; }, sortField: function() { return vm.adminPurchaseSortField; }, groupField: function() { return vm.adminPurchaseGroupField; }, search: function() { return vm.adminPurchaseSearch; } },
+    adminCompleted:  { sortDir: function() { return vm.adminCompletedSortDir; }, sortField: function() { return vm.adminCompletedSortField; }, groupField: function() { return vm.adminCompletedGroupField; }, search: function() { return vm.adminCompletedSearch; } },
+    adminAll:        { sortDir: function() { return vm.adminAllSortDir; }, sortField: function() { return vm.adminAllSortField; }, groupField: function() { return vm.adminAllGroupField; }, search: function() { return vm.adminAllSearch; } }
+};
+
+function toggleSortDirection(context) {
+    var obs = contextMap[context].sortDir();
+    obs(obs() === 'desc' ? 'asc' : 'desc');
+    var iconEl = document.getElementById(context === 'employee' ? 'empSortDirIcon' : context + 'SortDirIcon');
+    if (iconEl) iconEl.className = obs() === 'asc' ? 'fa fa-sort-amount-up' : 'fa fa-sort-amount-down';
+}
+
+function toggleDropdown(menuId) {
+    document.querySelectorAll('.toolbar-dropdown-menu.show').forEach(function(m) { if (m.id !== menuId) m.classList.remove('show'); });
+    document.getElementById(menuId).classList.toggle('show');
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.sort-dropdown-btn') && !e.target.closest('.group-dropdown-btn') && !e.target.closest('.toolbar-dropdown-menu')) {
+        document.querySelectorAll('.toolbar-dropdown-menu.show').forEach(function(m) { m.classList.remove('show'); });
+    }
+});
+
+function setSort(context, field, label) {
+    contextMap[context].sortField()(field);
+    var labelId = context === 'employee' ? 'empSortLabel' : context + 'SortLabel';
+    var labelEl = document.getElementById(labelId);
+    if (labelEl) labelEl.textContent = 'Sort by ' + label;
+    var menuId = context === 'employee' ? 'empSortMenu' : context + 'SortMenu';
+    var m = document.getElementById(menuId);
+    if (m) {
+        m.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); i.querySelector('.checkmark').innerHTML = '&nbsp;'; });
+        if (event && event.target) { var di = event.target.closest('.dropdown-item'); if (di) { di.classList.add('active'); di.querySelector('.checkmark').innerHTML = '&#10003;'; } }
+        m.classList.remove('show');
+    }
+}
+
+function setGroup(context, field, label) {
+    contextMap[context].groupField()(field);
+    var labelId = context === 'employee' ? 'empGroupLabel' : context + 'GroupLabel';
+    var labelEl = document.getElementById(labelId);
+    if (labelEl) labelEl.textContent = field === 'none' ? 'Group by' : 'Group by: ' + label;
+    var menuId = context === 'employee' ? 'empGroupMenu' : context + 'GroupMenu';
+    var m = document.getElementById(menuId);
+    if (m) {
+        m.querySelectorAll('.dropdown-item').forEach(function(i) { i.classList.remove('active'); i.querySelector('.checkmark').innerHTML = '&nbsp;'; });
+        if (event && event.target) { var di = event.target.closest('.dropdown-item'); if (di) { di.classList.add('active'); di.querySelector('.checkmark').innerHTML = '&#10003;'; } }
+        m.classList.remove('show');
+    }
+}
+
+function applyToolbar(context) {
+    var inputId = context === 'employee' ? 'empSearchInput' : context + 'SearchInput';
+    var inputEl = document.getElementById(inputId);
+    if (inputEl && contextMap[context]) { contextMap[context].search()(inputEl.value); }
+}
+
+// ============================================================
+// Form Functions
+// ============================================================
+var currentPersonType = 'employee';
+var personSelect2Instance = null;
+
+function setPersonType(type) {
+    currentPersonType = type;
+    var btns = document.querySelectorAll('#personTypeSelector .type-option');
+    btns.forEach(function(b) { b.classList.remove('active'); });
+    var activeBtn = document.querySelector('#personTypeSelector .type-' + type);
+    if (activeBtn) activeBtn.classList.add('active');
+    $('#personSelect').val(null).trigger('change');
+    document.getElementById('personMetadataPanel').classList.remove('show');
+    loadPersonDropdown(type);
+}
+
+function loadPersonDropdown(type) {
+    var data = type === 'employee' ? employeeApiData : consultantApiData;
+    var badgeClass = type === 'employee' ? 'badge-employee' : 'badge-consultant';
+    var badgeText = type === 'employee' ? 'EMP' : 'CON';
+    var $select = $('#personSelect');
+    $select.empty().append('<option value="">-- Select a ' + (type === 'employee' ? 'Employee' : 'Consultant') + ' --</option>');
+    data.forEach(function(person) { var opt = new Option(person.name, person.id, false, false); $(opt).data('person', person); $select.append(opt); });
+    if (personSelect2Instance) { $select.select2('destroy'); }
+    $select.select2({
+        theme: 'bootstrap-5', width: '100%', dropdownParent: $('#createRequestModal'),
+        placeholder: '-- Select a ' + (type === 'employee' ? 'Employee' : 'Consultant') + ' --', allowClear: true,
+        templateResult: function(state) {
+            if (!state.id) return state.text;
+            var person = $(state.element).data('person'); if (!person) return state.text;
+            return $('<span class="person-option-row"><span class="person-option-avatar" style="background:' + person.avatarColor + ';">' + person.initials + '</span><span class="person-option-name">' + person.name + '</span><span class="person-type-badge ' + badgeClass + '" style="margin-left:auto;">' + badgeText + '</span></span>');
+        },
+        templateSelection: function(state) {
+            if (!state.id) return state.text;
+            var person = $(state.element).data('person'); if (!person) return state.text;
+            return $('<span>' + person.name + ' <span class="person-type-badge ' + badgeClass + '">' + badgeText + '</span></span>');
+        }
+    });
+    personSelect2Instance = true;
+    $select.on('select2:select', function(e) { var pd = $(e.params.data.element).data('person'); if (pd) showPersonMetadata(pd, type); });
+    $select.on('select2:clear', function() { document.getElementById('personMetadataPanel').classList.remove('show'); });
+}
+
+function showPersonMetadata(person, type) {
+    var panel = document.getElementById('personMetadataPanel');
+    var badgeClass = type === 'employee' ? 'badge-employee' : 'badge-consultant';
+    var badgeText = type === 'employee' ? 'EMP' : 'CON';
+    document.getElementById('metaAvatar').style.background = person.avatarColor;
+    document.getElementById('metaAvatar').textContent = person.initials;
+    document.getElementById('metaName').innerHTML = person.name + ' <span class="person-type-badge ' + badgeClass + '">' + badgeText + '</span>';
+    document.getElementById('metaId').textContent = person.id;
+    document.getElementById('metaDept').textContent = person.department;
+    document.getElementById('metaJobTitle').textContent = person.jobTitle;
+    document.getElementById('metaEmail').textContent = person.email;
+    document.getElementById('metaPhone').textContent = person.phone;
+    document.getElementById('metaOffice').textContent = person.office;
+    document.getElementById('metaManager').textContent = person.manager;
+    panel.classList.add('show');
+}
+
+function submitRequest() {
+    var isValid = true;
+    var fields = [
+        { el: 'personSelect', err: 'personError', check: function(v) { return !v; } },
+        { el: 'requestCategoryId', err: 'categoryError', check: function(v) { return !v; } },
+        { el: 'requestPriority', err: 'priorityError', check: function(v) { return !v; } },
+        { el: 'requestNeededByDate', err: 'dateError', check: function(v) { return !v; } },
+        { el: 'requestJustification', err: 'justificationError', check: function(v) { return !v || v.length < 20; } }
+    ];
+    fields.forEach(function(f) {
+        var el = document.getElementById(f.el); var err = document.getElementById(f.err);
+        var val = $(el).val() || el.value;
+        if (f.check(val)) { err.style.display = 'block'; isValid = false; } else { err.style.display = 'none'; }
+    });
+    if (isValid) {
+        var personId = $('#personSelect').val();
+        var personData = null;
+        var allPersons = currentPersonType === 'employee' ? employeeApiData : consultantApiData;
+        allPersons.forEach(function(p) { if (p.id === personId) personData = p; });
+        var cat = $('#requestCategoryId').val();
+        var pri = document.getElementById('requestPriority').value.toLowerCase();
+        var needed = document.getElementById('requestNeededByDate').value;
+        var desc = document.getElementById('requestJustification').value;
+        var reqId = 'REQ-2025-' + String(51 + vm.allRequests().length).padStart(4, '0');
+        var today = new Date().toISOString().split('T')[0];
+
+        var newReq = buildRequest({
+            requestId: reqId, category: cat, priority: pri, status: 'requested',
+            submittedDate: today, neededByDate: needed,
+            employeeName: personData ? personData.name : 'Unknown',
+            employeeInitials: personData ? personData.initials : '??',
+            employeeAvatarColor: personData ? personData.avatarColor : '#999',
+            personType: currentPersonType, description: desc, remarks: null
+        });
+        vm.allRequests.unshift(newReq);
+        alert('Request #' + reqId + ' submitted successfully!');
+        bootstrap.Modal.getInstance(document.getElementById('createRequestModal')).hide();
+        document.getElementById('createRequestForm').reset();
+        document.getElementById('charCount').textContent = '0';
+        document.getElementById('personMetadataPanel').classList.remove('show');
+        $('#personSelect').val(null).trigger('change');
+    }
+}
+
+// ============================================================
+// Init
+// ============================================================
+$(document).ready(function() {
+    ko.applyBindings(vm);
+
+    var textarea = document.getElementById('requestJustification');
+    var counter = document.getElementById('charCount');
+    if (textarea && counter) {
+        textarea.addEventListener('input', function() {
+            if (this.value.length > 2000) this.value = this.value.substring(0, 2000);
+            counter.textContent = this.value.length;
+        });
+    }
+
+    $('#requestCategoryId').select2({ theme: 'bootstrap-5', width: '100%', dropdownParent: $('#createRequestModal') });
+    loadPersonDropdown('employee');
+
+    var today = new Date().toISOString().split('T')[0];
+    var dateInput = document.getElementById('requestNeededByDate');
+    if (dateInput) dateInput.setAttribute('min', today);
+
+    document.getElementById('createRequestModal').addEventListener('hidden.bs.modal', function() {
+        document.getElementById('personMetadataPanel').classList.remove('show');
+        document.querySelectorAll('.validation-error').forEach(function(e) { e.style.display = 'none'; });
+    });
+});
+</script>
+
+</body>
+</html>

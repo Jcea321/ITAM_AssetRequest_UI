@@ -1,0 +1,339 @@
+/**
+ * Appwork.CardView - Skeleton Loader Styles
+ * CSS skeleton loaders for CardView component
+ */
+
+/* Skeleton Container */
+.cardview-skeleton-container {
+    display: block; /* Visible by default for immediate display on page load */
+    padding: 0;
+    margin: 0;
+}
+
+/* Bottom Skeleton Container (for Load More) */
+.cardview-bottom-skeleton-container {
+    display: none; /* Hidden by default, shown during Load More */
+    padding: 0;
+    margin: 16px 0;
+}
+
+/* Individual Skeleton Card */
+/* Base styles - Light theme defaults - matches .card-view structure */
+.cardview-skeleton-card {
+    position: relative;
+    display: flex;
+    flex-direction: column; /* Matches .card-view */
+    background: #fff; /* Light theme: white background */
+    border: 1px solid #e0e0e0; /* Light theme: light gray border */
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); /* Light theme: subtle shadow */
+    overflow: hidden;
+}
+
+/* Skeleton Card Contents - matches .card-view-contents (flex row) */
+.cardview-skeleton-card-contents {
+    display: flex;
+    flex-direction: row;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+/* Skeleton Icon Column - matches .cv-icon-column */
+.cardview-skeleton-icon-column {
+    display: flex !important; /* Ensure it's displayed */
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    min-width: 40px; /* Ensure minimum width */
+    padding-top: 4px; /* Matches .cv-icon-column padding-top */
+    visibility: visible; /* Ensure visibility */
+}
+
+/* Skeleton Content Column - matches .cv-content-column (flex column) */
+.cardview-skeleton-content-column {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Skeleton Row - matches .cv-row (flex row for title and status) */
+.cardview-skeleton-row {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+/* Skeleton Title Wrapper - matches .cv-title-wrapper */
+.cardview-skeleton-title-wrapper {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+/* Skeleton Status Wrapper - matches .cv-status */
+.cardview-skeleton-status-wrapper {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    margin-left: 8px;
+}
+
+/* Shimmer Animation */
+@keyframes shimmer {
+    0% {
+        background-position: -468px 0;
+    }
+    100% {
+        background-position: 468px 0;
+    }
+}
+
+/* Shimmer gradient - Light theme defaults */
+.skeleton-shimmer {
+    animation: shimmer 1.5s infinite;
+    background: linear-gradient(
+        to right,
+        #f0f0f0 0%, /* Light theme: light gray */
+        #f8f8f8 20%, /* Light theme: lighter gray */
+        #f0f0f0 40%, /* Light theme: light gray */
+        #f0f0f0 100% /* Light theme: light gray */
+    );
+    background-size: 800px 100px;
+}
+
+/* Skeleton Title */
+/* Light theme defaults - matches .cv-title */
+.cardview-skeleton-title {
+    height: 20px;
+    width: 60%;
+    margin-bottom: 0; /* No margin, wrapper handles spacing */
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Light theme: gray background */
+}
+
+/* Skeleton Icon */
+/* Light theme defaults - matches icon size in .cv-icon-column */
+.cardview-skeleton-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Light theme: gray background */
+    margin: 0; /* No margin, column handles spacing */
+    flex-shrink: 0;
+    display: block; /* Ensure it's displayed */
+}
+
+/* Skeleton SubTitle */
+/* Light theme defaults - matches .cv-subtitle */
+.cardview-skeleton-subtitle {
+    height: 16px;
+    width: 70%;
+    margin-bottom: 4px; /* Matches .cv-subtitle margin-bottom: 4px */
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Light theme: gray background */
+}
+
+/* Skeleton Supporting Text Lines */
+/* Light theme defaults */
+.cardview-skeleton-text {
+    height: 14px;
+    width: 100%;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Light theme: gray background */
+}
+
+.cardview-skeleton-text:last-of-type {
+    width: 80%;
+}
+
+/* Skeleton Description */
+/* Light theme defaults - matches .cv-description */
+.cardview-skeleton-description {
+    height: 14px;
+    width: 100%;
+    margin-bottom: 8px; /* Matches .cv-description margin-bottom: 8px */
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Light theme: gray background */
+}
+
+.cardview-skeleton-description:last-of-type {
+    width: 85%;
+}
+
+/* Skeleton SubDescription */
+/* Light theme defaults - matches .cv-subdescription (3 lines of text) */
+.cardview-skeleton-subdescription {
+    height: 56px; /* Approximately 3 lines: 13px font-size * 1.5 line-height * 3 lines ≈ 58.5px, rounded to 56px */
+    width: 90%;
+    margin-bottom: 8px; /* Matches .cv-subdescription margin-bottom: 8px */
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Light theme: gray background */
+}
+
+/* Skeleton Status Badge */
+/* Light theme defaults - matches .cv-status-inner */
+.cardview-skeleton-status {
+    height: 24px;
+    width: 80px;
+    margin-top: 0; /* No margin, wrapper handles spacing */
+    margin-bottom: 0;
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Light theme: gray background */
+}
+
+/* Skeleton Actions Container */
+/* Matches .cv-actions with .cardview-action-primary positioning */
+.cardview-skeleton-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    margin-left: auto; /* Push actions to the right, matching .cardview-action-primary margin-left: auto */
+}
+
+/* Skeleton Action Buttons */
+/* Light theme defaults */
+.cardview-skeleton-button {
+    height: 32px;
+    width: 80px;
+    border-radius: 4px;
+    background-color: #e0e0e0; /* Light theme: gray background */
+}
+
+.cardview-skeleton-button:first-child {
+    width: 100px;
+}
+
+/* Apply shimmer to all skeleton elements */
+.cardview-skeleton-card .skeleton-shimmer,
+.cardview-skeleton-title,
+.cardview-skeleton-icon,
+.cardview-skeleton-subtitle,
+.cardview-skeleton-text,
+.cardview-skeleton-description,
+.cardview-skeleton-subdescription,
+.cardview-skeleton-status,
+.cardview-skeleton-button {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Shimmer overlay - Light theme defaults */
+.cardview-skeleton-card .skeleton-shimmer::after,
+.cardview-skeleton-title::after,
+.cardview-skeleton-icon::after,
+.cardview-skeleton-subtitle::after,
+.cardview-skeleton-text::after,
+.cardview-skeleton-description::after,
+.cardview-skeleton-subdescription::after,
+.cardview-skeleton-status::after,
+.cardview-skeleton-button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.4) 50%, /* Light theme: white overlay */
+        rgba(255, 255, 255, 0) 100%
+    );
+    animation: shimmer 1.5s infinite;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .cardview-skeleton-card {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+    
+    .cardview-skeleton-title {
+        width: 80%;
+    }
+    
+    .cardview-skeleton-status {
+        align-self: flex-start;
+    }
+    
+    .cardview-skeleton-actions {
+        flex-direction: column;
+    }
+    
+    .cardview-skeleton-button {
+        width: 100%;
+    }
+}
+
+/* Loading State Visibility Control */
+.cardviews.loading .cardview-skeleton-container {
+    display: block;
+}
+
+.cardviews.loading .cardview-container > [data-bind] {
+    display: none;
+}
+
+/* *****************************************************************************
+ * Dark Theme Overrides
+ */
+
+/* Skeleton card - Dark theme */
+.dark-style .cardview-skeleton-card {
+    background: #32353b; /* Dark theme: dark gray background (matches card-view) */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Dark theme: subtle white border (matches card-view) */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3); /* Dark theme: darker shadow */
+}
+
+/* Shimmer gradient - Dark theme */
+.dark-style .skeleton-shimmer {
+    background: linear-gradient(
+        to right,
+        #2a2d32 0%, /* Dark theme: darker gray */
+        #32353b 20%, /* Dark theme: dark gray (matches card background) */
+        #2a2d32 40%, /* Dark theme: darker gray */
+        #2a2d32 100% /* Dark theme: darker gray */
+    );
+}
+
+/* Skeleton elements - Dark theme */
+.dark-style .cardview-skeleton-title,
+.dark-style .cardview-skeleton-icon,
+.dark-style .cardview-skeleton-subtitle,
+.dark-style .cardview-skeleton-text,
+.dark-style .cardview-skeleton-description,
+.dark-style .cardview-skeleton-subdescription,
+.dark-style .cardview-skeleton-status,
+.dark-style .cardview-skeleton-button {
+    background-color: rgba(255, 255, 255, 0.1); /* Dark theme: subtle white overlay */
+}
+
+/* Shimmer overlay - Dark theme */
+.dark-style .cardview-skeleton-card .skeleton-shimmer::after,
+.dark-style .cardview-skeleton-title::after,
+.dark-style .cardview-skeleton-icon::after,
+.dark-style .cardview-skeleton-subtitle::after,
+.dark-style .cardview-skeleton-text::after,
+.dark-style .cardview-skeleton-description::after,
+.dark-style .cardview-skeleton-subdescription::after,
+.dark-style .cardview-skeleton-status::after,
+.dark-style .cardview-skeleton-button::after {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%, /* Dark theme: subtle white overlay */
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
