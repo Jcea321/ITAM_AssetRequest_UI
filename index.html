@@ -354,6 +354,36 @@
             .sidebar { display: none; }
             .main-content { margin-left: 0; }
         }
+
+        /* ===== SUB-TABS (v7.0) ===== */
+        .sub-tabs-bar {
+            display: flex; align-items: center; gap: 0.35rem;
+            padding: 0.65rem 1.25rem; border-bottom: 1px solid var(--border-color);
+            background: #f8f9fc; flex-wrap: wrap;
+        }
+        .sub-tab-btn {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.3rem 0.85rem; border-radius: 20px;
+            font-size: 0.78rem; font-weight: 500; color: #666;
+            background: #fff; border: 1px solid #d8dae0;
+            cursor: pointer; transition: all 0.18s; white-space: nowrap;
+            line-height: 1.5;
+        }
+        .sub-tab-btn:hover:not(.active) { background: #eef0ff; color: var(--primary); border-color: #b8bcf0; }
+        .sub-tab-btn.active {
+            background: var(--primary); color: #fff;
+            border-color: var(--primary);
+            box-shadow: 0 2px 6px rgba(91,103,199,0.3);
+        }
+        .sub-tab-btn .stb-count {
+            display: inline-flex; align-items: center; justify-content: center;
+            min-width: 18px; height: 18px; border-radius: 9px; padding: 0 4px;
+            font-size: 0.68rem; font-weight: 700;
+            background: rgba(0,0,0,0.1);
+        }
+        .sub-tab-btn.active .stb-count { background: rgba(255,255,255,0.3); }
+        .nav-tabs-top .tab-content { padding: 0; }
+        .tab-inner-content { padding: 1.25rem; }
     </style>
 </head>
 <body>
@@ -565,6 +595,13 @@
                     <div class="tab-content">
                         <!-- TAB: Pending Review -->
                         <div class="tab-pane fade show active" id="tab-pending-review" role="tabpanel">
+                            <!-- Sub-tabs -->
+                            <div class="sub-tabs-bar" id="pendingReview-subtabs">
+                                <button class="sub-tab-btn active" onclick="setSubTab('pendingReview','all',this)">All <span class="stb-count" id="stb-pendingReview-all">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('pendingReview','requested',this)">Requested <span class="stb-count" id="stb-pendingReview-requested">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('pendingReview','alternative_pending_client',this)">Pending Client Decision <span class="stb-count" id="stb-pendingReview-alternative_pending_client">0</span></button>
+                            </div>
+                            <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminPending-toolbar">
                                 <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminPending')"><i class="fa fa-sort-amount-down" id="adminPendingSortDirIcon"></i></button></div>
                                 <div class="toolbar-section" style="position:relative;">
@@ -624,10 +661,25 @@
                                 </div>
                                 <!-- /ko -->
                             </div>
+                            </div><!-- end tab-inner-content -->
                         </div>
 
                         <!-- TAB: In Progress -->
                         <div class="tab-pane fade" id="tab-in-progress" role="tabpanel">
+                            <!-- Sub-tabs -->
+                            <div class="sub-tabs-bar" id="inProgress-subtabs">
+                                <button class="sub-tab-btn active" onclick="setSubTab('inProgress','all',this)">All <span class="stb-count" id="stb-inProgress-all">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','searching_inventory',this)">Searching Inventory <span class="stb-count" id="stb-inProgress-searching_inventory">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','match_found',this)">Match Found <span class="stb-count" id="stb-inProgress-match_found">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','no_match_alternative_proposed',this)">Alternative Proposed <span class="stb-count" id="stb-inProgress-no_match_alternative_proposed">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','alternative_accepted',this)">Alternative Accepted <span class="stb-count" id="stb-inProgress-alternative_accepted">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','alternative_rejected',this)">Alternative Rejected <span class="stb-count" id="stb-inProgress-alternative_rejected">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','reserved',this)">Reserved <span class="stb-count" id="stb-inProgress-reserved">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','setting_up',this)">Setting Up <span class="stb-count" id="stb-inProgress-setting_up">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','ready_for_transfer',this)">Ready for Transfer <span class="stb-count" id="stb-inProgress-ready_for_transfer">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('inProgress','in_transit_to_recipient',this)">In Transit <span class="stb-count" id="stb-inProgress-in_transit_to_recipient">0</span></button>
+                            </div>
+                            <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminInProgress-toolbar">
                                 <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminInProgress')"><i class="fa fa-sort-amount-down" id="adminInProgressSortDirIcon"></i></button></div>
                                 <div class="toolbar-section" style="position:relative;">
@@ -687,10 +739,20 @@
                                 </div>
                                 <!-- /ko -->
                             </div>
+                            </div><!-- end tab-inner-content -->
                         </div>
 
                         <!-- TAB: Purchase Flow -->
                         <div class="tab-pane fade" id="tab-purchase-flow" role="tabpanel">
+                            <!-- Sub-tabs -->
+                            <div class="sub-tabs-bar" id="purchaseFlow-subtabs">
+                                <button class="sub-tab-btn active" onclick="setSubTab('purchaseFlow','all',this)">All <span class="stb-count" id="stb-purchaseFlow-all">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('purchaseFlow','pending_purchase_approval',this)">Pending Approval <span class="stb-count" id="stb-purchaseFlow-pending_purchase_approval">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('purchaseFlow','purchase_approved',this)">Purchase Approved <span class="stb-count" id="stb-purchaseFlow-purchase_approved">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('purchaseFlow','pending_receipt',this)">Pending Receipt <span class="stb-count" id="stb-purchaseFlow-pending_receipt">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('purchaseFlow','received_by_finance',this)">Received <span class="stb-count" id="stb-purchaseFlow-received_by_finance">0</span></button>
+                            </div>
+                            <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminPurchase-toolbar">
                                 <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminPurchase')"><i class="fa fa-sort-amount-down" id="adminPurchaseSortDirIcon"></i></button></div>
                                 <div class="toolbar-section" style="position:relative;">
@@ -750,10 +812,20 @@
                                 </div>
                                 <!-- /ko -->
                             </div>
+                            </div><!-- end tab-inner-content -->
                         </div>
 
                         <!-- TAB: Completed -->
                         <div class="tab-pane fade" id="tab-completed" role="tabpanel">
+                            <!-- Sub-tabs -->
+                            <div class="sub-tabs-bar" id="completed-subtabs">
+                                <button class="sub-tab-btn active" onclick="setSubTab('completed','all',this)">All <span class="stb-count" id="stb-completed-all">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('completed','delivered',this)">Delivered <span class="stb-count" id="stb-completed-delivered">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('completed','failed_delivery',this)">Failed Delivery <span class="stb-count" id="stb-completed-failed_delivery">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('completed','purchase_rejected',this)">Purchase Rejected <span class="stb-count" id="stb-completed-purchase_rejected">0</span></button>
+                                <button class="sub-tab-btn" onclick="setSubTab('completed','cancelled',this)">Cancelled <span class="stb-count" id="stb-completed-cancelled">0</span></button>
+                            </div>
+                            <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminCompleted-toolbar">
                                 <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminCompleted')"><i class="fa fa-sort-amount-down" id="adminCompletedSortDirIcon"></i></button></div>
                                 <div class="toolbar-section" style="position:relative;">
@@ -815,10 +887,12 @@
                                 </div>
                                 <!-- /ko -->
                             </div>
+                            </div><!-- end tab-inner-content -->
                         </div>
 
                         <!-- TAB: All Requests -->
                         <div class="tab-pane fade" id="tab-all-requests" role="tabpanel">
+                            <div class="tab-inner-content">
                             <div class="cardview-toolbar" id="adminAll-toolbar">
                                 <div class="toolbar-section"><button class="sort-direction-btn" onclick="toggleSortDirection('adminAll')"><i class="fa fa-sort-amount-down" id="adminAllSortDirIcon"></i></button></div>
                                 <div class="toolbar-section" style="position:relative;">
@@ -879,6 +953,7 @@
                                 </div>
                                 <!-- /ko -->
                             </div>
+                            </div><!-- end tab-inner-content -->
                         </div>
                     </div>
                 </div>
@@ -1572,10 +1647,21 @@ function AssetRequestViewModel() {
     self.adminCompletedSortField = ko.observable('submitted'); self.adminCompletedSortDir = ko.observable('desc'); self.adminCompletedGroupField = ko.observable('none'); self.adminCompletedSearch = ko.observable('');
     self.adminAllSortField = ko.observable('submitted'); self.adminAllSortDir = ko.observable('desc'); self.adminAllGroupField = ko.observable('none'); self.adminAllSearch = ko.observable('');
 
+    // ===== Sub-tab filter observables (v7.0) =====
+    self.pendingReviewSubTab = ko.observable('all');
+    self.inProgressSubTab = ko.observable('all');
+    self.purchaseFlowSubTab = ko.observable('all');
+    self.completedSubTab = ko.observable('all');
+
     // ===== Helper: build filtered/sorted/grouped computed =====
-    function buildFilteredComputed(filterFn, searchObs, sortFieldObs, sortDirObs, groupFieldObs) {
+    function buildFilteredComputed(filterFn, searchObs, sortFieldObs, sortDirObs, groupFieldObs, subTabObs) {
         return ko.computed(function() {
-            var items = self.allRequests().filter(filterFn);
+            var subTab = subTabObs ? subTabObs() : 'all';
+            var items = self.allRequests().filter(function(r) {
+                if (!filterFn(r)) return false;
+                if (subTab && subTab !== 'all') return r.status === subTab;
+                return true;
+            });
             var search = searchObs().toLowerCase();
             var sortField = sortFieldObs();
             var sortDir = sortDirObs();
@@ -1616,10 +1702,10 @@ function AssetRequestViewModel() {
     }
 
     // ===== Tab filter computeds =====
-    self.filteredPendingReview = buildFilteredComputed(function(r) { return pendingReviewStatuses.indexOf(r.status) !== -1; }, self.adminPendingSearch, self.adminPendingSortField, self.adminPendingSortDir, self.adminPendingGroupField);
-    self.filteredInProgress = buildFilteredComputed(function(r) { return inProgressStatuses.indexOf(r.status) !== -1; }, self.adminInProgressSearch, self.adminInProgressSortField, self.adminInProgressSortDir, self.adminInProgressGroupField);
-    self.filteredPurchaseFlow = buildFilteredComputed(function(r) { return purchaseFlowStatuses.indexOf(r.status) !== -1; }, self.adminPurchaseSearch, self.adminPurchaseSortField, self.adminPurchaseSortDir, self.adminPurchaseGroupField);
-    self.filteredCompleted = buildFilteredComputed(function(r) { return completedStatuses.indexOf(r.status) !== -1; }, self.adminCompletedSearch, self.adminCompletedSortField, self.adminCompletedSortDir, self.adminCompletedGroupField);
+    self.filteredPendingReview = buildFilteredComputed(function(r) { return pendingReviewStatuses.indexOf(r.status) !== -1; }, self.adminPendingSearch, self.adminPendingSortField, self.adminPendingSortDir, self.adminPendingGroupField, self.pendingReviewSubTab);
+    self.filteredInProgress = buildFilteredComputed(function(r) { return inProgressStatuses.indexOf(r.status) !== -1; }, self.adminInProgressSearch, self.adminInProgressSortField, self.adminInProgressSortDir, self.adminInProgressGroupField, self.inProgressSubTab);
+    self.filteredPurchaseFlow = buildFilteredComputed(function(r) { return purchaseFlowStatuses.indexOf(r.status) !== -1; }, self.adminPurchaseSearch, self.adminPurchaseSortField, self.adminPurchaseSortDir, self.adminPurchaseGroupField, self.purchaseFlowSubTab);
+    self.filteredCompleted = buildFilteredComputed(function(r) { return completedStatuses.indexOf(r.status) !== -1; }, self.adminCompletedSearch, self.adminCompletedSortField, self.adminCompletedSortDir, self.adminCompletedGroupField, self.completedSubTab);
     self.filteredAllRequests = buildFilteredComputed(function() { return true; }, self.adminAllSearch, self.adminAllSortField, self.adminAllSortDir, self.adminAllGroupField);
     self.filteredEmployeeRequests = buildFilteredComputed(function() { return true; }, self.empSearch, self.empSortField, self.empSortDir, self.empGroupField);
 
@@ -2194,6 +2280,49 @@ function applyToolbar(context) {
 }
 
 // ============================================================
+// Sub-tab Functions (v7.0)
+// ============================================================
+var subTabObsMap = {
+    pendingReview: function() { return vm.pendingReviewSubTab; },
+    inProgress:    function() { return vm.inProgressSubTab; },
+    purchaseFlow:  function() { return vm.purchaseFlowSubTab; },
+    completed:     function() { return vm.completedSubTab; }
+};
+
+var subTabStatusGroups = {
+    pendingReview: ['requested', 'alternative_pending_client'],
+    inProgress:    ['searching_inventory', 'match_found', 'no_match_alternative_proposed', 'alternative_accepted', 'alternative_rejected', 'reserved', 'setting_up', 'ready_for_transfer', 'in_transit_to_recipient'],
+    purchaseFlow:  ['pending_purchase_approval', 'purchase_approved', 'pending_receipt', 'received_by_finance'],
+    completed:     ['delivered', 'failed_delivery', 'purchase_rejected', 'cancelled']
+};
+
+function setSubTab(tabKey, status, btn) {
+    // Update observable to trigger Knockout re-filter
+    subTabObsMap[tabKey]()(status);
+
+    // Update active button style
+    var bar = btn.closest('.sub-tabs-bar');
+    bar.querySelectorAll('.sub-tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+}
+
+function updateSubTabCounts() {
+    var all = vm.allRequests();
+    Object.keys(subTabStatusGroups).forEach(function(tabKey) {
+        var statuses = subTabStatusGroups[tabKey];
+        var total = 0;
+        statuses.forEach(function(s) {
+            var count = all.filter(function(r) { return r.status === s; }).length;
+            var el = document.getElementById('stb-' + tabKey + '-' + s);
+            if (el) el.textContent = count;
+            total += count;
+        });
+        var allEl = document.getElementById('stb-' + tabKey + '-all');
+        if (allEl) allEl.textContent = total;
+    });
+}
+
+// ============================================================
 // Form Functions
 // ============================================================
 var currentPersonType = 'employee';
@@ -2303,6 +2432,8 @@ function submitRequest() {
 // ============================================================
 $(document).ready(function() {
     ko.applyBindings(vm);
+    vm.allRequests.subscribe(updateSubTabCounts);
+    updateSubTabCounts();
 
     var textarea = document.getElementById('requestJustification');
     var counter = document.getElementById('charCount');
